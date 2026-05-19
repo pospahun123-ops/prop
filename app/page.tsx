@@ -18,7 +18,7 @@ export default function HomePage() {
             PROP MANAGEMENT
           </h1>
           <p className="text-slate-400 text-sm font-medium">
-            ยินดีต้อนรับสู่ระบบจัดการและโชว์รูมสินค้าประกอบฉาก
+            ยินดีต้อนรับสู่ระบบ prop
           </p>
         </div>
 
