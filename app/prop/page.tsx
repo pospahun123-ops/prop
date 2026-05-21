@@ -36,7 +36,7 @@ export default async function PropCollectionsPage() {
           Return
         </Link>
         <div className="absolute left-1/2 -translate-x-1/2 font-serif text-xl lg:text-2xl tracking-widest text-[#2C2A26]">
-          HERITAGE
+          Terra Home Studio
         </div>
         
       </nav>
