@@ -168,26 +168,29 @@ export default function PropFilterClient({ collections }: { collections: any[] }
               {/* ตะกร้าสินค้า */}
               <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-x-4 gap-y-10 sm:gap-x-6 sm:gap-y-14 lg:gap-x-8 lg:gap-y-16 w-full">
                 {paginatedCollections.map((group) => {
-                  const slides = group.products
-                    ?.filter((p: any) => p.image_url !== null && p.image_url !== "")
-                    .map((p: any) => ({
-                      image_url: p.image_url,
-                      price: p.price,
-                      sku: p.sku,
-                      // ✅ เพิ่ม 2 บรรทัดนี้เข้าไป ส่งข้อมูลให้ลูกด้วย!
-                      discount_value: p.discount_value,
-                      discount_type: p.discount_type
-                    })) || []
+                 // ค้นหาบรรทัดนี้ในแถวๆ paginatedCollections.map
+                const slides = group.products
+                  ?.filter((p: any) => p.image_url !== null && p.image_url !== "")
+                  .map((p: any) => ({
+                    image_url: p.image_url,
+                    price: p.price,
+                    sku: p.sku,
+                    name: p.name, // ✅ เพิ่มบรรทัดนี้
+                    discount_value: p.discount_value,
+                    discount_type: p.discount_type
+                  })) || []
 
-                  if (slides.length === 0 && group.cover_image_url) {
-                    slides.push({ 
-                      image_url: group.cover_image_url, 
-                      price: null, 
-                      sku: "",
-                      discount_value: null,
-                      discount_type: null
-                    })
-                  }
+                // และตรงจุดที่เผื่อกรณีไม่มีรูป:
+                if (slides.length === 0 && group.cover_image_url) {
+                  slides.push({ 
+                    image_url: group.cover_image_url, 
+                    price: null, 
+                    sku: "",
+                    name: "", // ✅ เพิ่มบรรทัดนี้ด้วย
+                    discount_value: null,
+                    discount_type: null
+                  })
+                }
 
                   return (
                     <CollectionCard key={group.id} group={group} slides={slides} />

@@ -8,12 +8,12 @@ export const revalidate = 0
 export default async function PropCollectionsPage() {
   const supabase = await createClient()
 
-  // 1. ดึงข้อมูล Collections และ Products (เพิ่ม id มาด้วยเพื่อเอาไปเทียบกับ discount_rules)
+  // ค้นหาบรรทัดนี้
   const { data: collections, error } = await supabase
     .from("collection_groups")
     .select(`
       *,
-      products ( id, sku, image_url, price )
+      products ( id, sku, name, image_url, price ) // ✅ เพิ่ม name ตรงนี้
     `)
     .order("created_at", { ascending: false })
 

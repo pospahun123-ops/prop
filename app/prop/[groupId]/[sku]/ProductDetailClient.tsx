@@ -84,13 +84,8 @@ export default function ProductDetailClient({
             <p className="mt-3 text-lg font-medium tracking-widest text-[#C8A97E]">
               {activeProduct.price > 0 ? `THB ${activeProduct.price.toLocaleString()}` : "POA"}
             </p>
-            <p className="text-[11px] text-gray-400 mt-2 uppercase tracking-[0.2em] font-mono">
-              REF. {activeProduct.sku}
-            </p>
+           
             
-            <p className="mt-6 text-sm font-light leading-relaxed text-gray-600 max-w-2xl">
-              {activeProduct.description || "Curated item selected specifically for the fine heritage and premium prop line. Beautifully crafted for versatile uses."}
-            </p>
 
             {/* สเปกขนาดสินค้า */}
             <div className="mt-8 py-5 border-y border-gray-100 grid grid-cols-3 text-center text-xs divide-x divide-gray-100 max-w-xl">
@@ -158,7 +153,7 @@ export default function ProductDetailClient({
                       <h3 className={`text-[10px] uppercase font-medium tracking-wider truncate w-full transition-colors ${isActive ? 'text-[#C8A97E]' : 'text-gray-800 group-hover:text-[#C8A97E]'}`}>
                         {item.name}
                       </h3>
-                      <p className="text-[9px] text-gray-400 font-mono mt-1">REF: {item.sku}</p>
+                   
                       
                       <p className={`text-[10px] font-semibold mt-1.5 ${isActive ? 'text-[#C8A97E]' : 'text-gray-900'}`}>
                         {item.price > 0 ? `THB ${item.price.toLocaleString()}` : "POA"}

@@ -8,7 +8,7 @@ interface ProductSlide {
   image_url: string
   price: number | null
   sku: string
-  // ✅ เพิ่มฟิลด์สำหรับรับค่าส่วนลด
+  name?: string // ✅ เพิ่มบรรทัดนี้
   discount_value?: number | null 
   discount_type?: 'PERCENT' | 'FIXED' | null
 }
@@ -33,7 +33,7 @@ export default function CollectionCard({
     return () => clearInterval(timer)
   }, [slides.length])
 
-  const currentSlide = slides[currentIndex] || { image_url: null, price: null, sku: "" }
+  const currentSlide = slides[currentIndex] || { image_url: null, price: null, sku: "", name: "" }
   const displayPrice = currentSlide.price
 
   const targetHref = currentSlide.sku 
@@ -85,17 +85,16 @@ export default function CollectionCard({
 
       {/* รายละเอียดสินค้า */}
       <div className="flex flex-col items-center text-center px-1 sm:px-2">
-        <span className="text-[#C8A97E] text-[8px] sm:text-[9px] uppercase font-medium tracking-[0.2em] mb-1 sm:mb-2">
-          {currentSlide.sku || group.id}
-        </span>
         
-        <h3 className="font-serif text-[#2C2A26] group-hover:text-[#C8A97E] text-sm sm:text-base lg:text-lg transition-colors duration-300 line-clamp-1 mb-0.5 sm:mb-1">
-          {group.name || `Collection ${group.id}`}
-        </h3>
         
-        <p className="text-[#8C8A86] text-[10px] sm:text-xs font-light tracking-wide line-clamp-1 mb-1.5 sm:mb-2">
-          {group.description || "Explore the curated selection"}
-        </p>
+        {/* ✅ เพิ่มโค้ดนี้เพื่อแสดงชื่อสินค้า (ถ้าต้องการแสดงแยกจากชื่อ Collection) */}
+        {currentSlide.name && (
+          <span className="text-[#2C2A26] text-xl font-medium mb-1">
+            {currentSlide.name}
+          </span>
+        )}
+        
+      
 
         {/* ✅ Logic คำนวณและแสดงผลราคา (แบบมี/ไม่มีส่วนลด) */}
         {(() => {
