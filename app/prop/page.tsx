@@ -9,11 +9,13 @@ export default async function PropCollectionsPage() {
   const supabase = await createClient()
 
   // ค้นหาบรรทัดนี้
+  // 1. ดึงข้อมูล Collections และ Products 
   const { data: collections, error } = await supabase
     .from("collection_groups")
+    // ✅ ย้ายคอมเมนต์ออกมาไว้ด้านนอกแทน
     .select(`
       *,
-      products ( id, sku, name, image_url, price ) // ✅ เพิ่ม name ตรงนี้
+      products ( id, sku, name, image_url, price )
     `)
     .order("created_at", { ascending: false })
 
