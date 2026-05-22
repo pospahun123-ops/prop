@@ -8,11 +8,9 @@ export const revalidate = 0
 export default async function PropCollectionsPage() {
   const supabase = await createClient()
 
-  // ค้นหาบรรทัดนี้
   // 1. ดึงข้อมูล Collections และ Products 
   const { data: collections, error } = await supabase
     .from("collection_groups")
-    // ✅ ย้ายคอมเมนต์ออกมาไว้ด้านนอกแทน
     .select(`
       *,
       products ( id, sku, name, image_url, price )
@@ -39,29 +37,30 @@ export default async function PropCollectionsPage() {
     `)
     .eq("active", true)
 
-  // 3. Map ข้อมูลส่วนลดเข้าไปใน Products แต่ละตัว
   const now = new Date()
   
-  const mappedCollections = collections?.map((collection) => {
+  // 💡 จุดที่แก้ครับนาย! กรองเอาเฉพาะกลุ่มคอลเลกชันที่มีสินค้า (products) มากกว่า 0 ชิ้นเท่านั้น
+  const activeCollections = collections?.filter(collection => 
+    collection.products && collection.products.length > 0
+  ) || []
+
+  // 3. Map ข้อมูลส่วนลดเข้าไปใน Products แต่ละตัว (ใช้ activeCollections ที่กรองแล้วมาทำต่อ)
+  const mappedCollections = activeCollections.map((collection) => {
     const mappedProducts = collection.products.map((product: any) => {
       let applicableDiscount = null
 
       if (activeDiscounts && activeDiscounts.length > 0) {
-        // หาส่วนลดที่ตรงกับสินค้านี้ หรือส่วนลดที่ใช้ได้กับ "ทุกสินค้า" (product_id เป็น null)
         applicableDiscount = activeDiscounts.find(discount => {
-          // เช็คเรื่องวันที่ (ถ้ามี start_date/end_date)
           const isStarted = !discount.start_date || new Date(discount.start_date) <= now
           const isNotEnded = !discount.end_date || new Date(discount.end_date) >= now
           if (!isStarted || !isNotEnded) return false
 
-          // เช็คว่าอยู่ในกฎของสินค้านี้ไหม
           return discount.discount_rules.some((rule: any) => 
             rule.product_id === product.id || rule.product_id === null
           )
         })
       }
 
-      // แปะค่า discount_value และ discount_type เข้าไปใน object product
       return {
         ...product,
         discount_value: applicableDiscount ? applicableDiscount.value : null,
@@ -70,7 +69,7 @@ export default async function PropCollectionsPage() {
     })
 
     return { ...collection, products: mappedProducts }
-  }) || []
+  })
 
   return (
     <div className="min-h-screen bg-[#F9F8F6] text-[#2C2A26] font-sans selection:bg-[#C8A97E]/20">
@@ -98,7 +97,7 @@ export default async function PropCollectionsPage() {
           </h1>
         </div>
 
-        {/* ✅ ส่ง mappedCollections ที่มีส่วนลดแล้ว ไปให้ Client */}
+        {/* ส่ง mappedCollections ที่กรองเอาพวกว่างๆ ออกแล้ว ไปให้ Client */}
         {mappedCollections.length === 0 ? (
           <div className="text-center py-32">
             <span className="text-[#C8A97E] text-sm uppercase tracking-[0.2em] font-light">No Collections Discovered</span>
