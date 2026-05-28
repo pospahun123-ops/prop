@@ -1,24 +1,66 @@
 // app/prop/[groupId]/[sku]/page.tsx
-import { createClient } from "../../../../src/supabase/server"
-import ProductDetailClient from "./ProductDetailClient"
+import { Metadata } from 'next'
+import { createClient } from "../../../../src/supabase/server" // ⚡ ดึงโค้ด Supabase ของนายกลับมา
+import ProductDetailClient from './ProductDetailClient'
 
 type Props = {
-  params: Promise<{ groupId: string; sku: string }>
+  params: Promise<{ groupId: string; sku: string }> // ⚡ ปรับเป็น Promise ตามมาตรฐาน Next.js ใหม่
 }
 
 export const revalidate = 0
 
+// ⚡ ฟังก์ชันทำ SEO (generateMetadata) แบบรองรับ Next.js ใหม่
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const resolvedParams = await params // 👈 แก้ตรงนี้: ต้องใช้ await เพื่อแกะข้อมูลออกมาก่อนครับนาย!
+  const currentGroupId = decodeURIComponent(resolvedParams.groupId)
+  const currentSku = decodeURIComponent(resolvedParams.sku)
+
+  const supabase = await createClient()
+  const { data: products } = await supabase
+    .from("products")
+    .select("name, image_url")
+    .eq("sku", currentSku)
+    .single()
+
+  const title = products ? `${products.name} | COLLECTION SHOWROOM` : "COLLECTION SHOWROOM"
+  const description = `เช็คสต็อกสินค้ากลุ่ม ${currentGroupId} และสาขาที่พร้อมจำหน่ายในสต็อกปัจจุบัน`
+
+  return {
+    title: title,
+    description: description,
+    openGraph: {
+      title: title,
+      description: description,
+      url: `https://yourdomain.com/prop/${encodeURIComponent(currentGroupId)}/${encodeURIComponent(currentSku)}`,
+      siteName: 'COLLECTION SHOWROOM',
+      images: products?.image_url ? [{ url: products.image_url }] : [],
+      type: 'article',
+    },
+  }
+}
+
+// ⚡ หน้าตา Page หลัก (ปรับใช้ await params เหมือนกัน)
 export default async function ProductDetailWithGroupSidebarPage({ params }: Props) {
-  const resolvedParams = await params
+  const resolvedParams = await params // 👈 แก้ตรงนี้: แกะ Promise ออกมาให้เรียบร้อย
   const currentGroupId = decodeURIComponent(resolvedParams.groupId)
   const currentSku = decodeURIComponent(resolvedParams.sku)
 
   const supabase = await createClient()
 
-  // ⚡ ดึงสินค้าทั้งหมดที่อยู่ใน Group นี้มาเตรียมไว้ในรอบเดียวเลยครับนาย
   const { data: groupProducts, error } = await supabase
     .from("products")
-    .select("*")
+    .select(`
+      *,
+      stock (
+        qty,
+        branches (
+          id,
+          branch_name,
+          latitude,
+          longitude
+        )
+      )
+    `)
     .eq("collection_group_id", currentGroupId)
     .order("sku", { ascending: true })
 
@@ -31,7 +73,6 @@ export default async function ProductDetailWithGroupSidebarPage({ params }: Prop
   }
 
   return (
-    // 📦 ส่งโครงสร้างข้อมูลทั้งหมดไปชุบชีวิตในร่างความเร็วแสงฝั่งหน้าบ้าน
     <ProductDetailClient 
       groupProducts={groupProducts}
       currentGroupId={currentGroupId}
