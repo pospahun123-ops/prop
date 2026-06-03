@@ -1,18 +1,81 @@
+// app/prop/PropFilterClient.tsx
 "use client"
 
 import { useState, useMemo, useEffect, useRef } from "react"
+// 💡 1. Import ระบบจัดการ URL ของ Next.js
+import { useRouter, usePathname, useSearchParams } from "next/navigation" 
 import CollectionCard from "./CollectionCard"
 
 export default function PropFilterClient({ collections }: { collections: any[] }) {
-  const [activeFilter, setActiveFilter] = useState("All")
-  const [isDropdownOpen, setIsDropdownOpen] = useState(false) 
-  
-  // ✅ แก้ใหม่: ตั้งค่าเป็น Array ว่าง `[]` เพื่อให้มัน "ยุบหมด" ตอนโหลดหน้าแรกครับ
-const [expandedGroups, setExpandedGroups] = useState<string[]>([])
-  const [currentPage, setCurrentPage] = useState(1)
-  const itemsPerPage = 8 
+  // 💡 2. เรียกใช้งาน URL Hooks
+  const router = useRouter()
+  const pathname = usePathname()
+  const searchParams = useSearchParams()
 
+  // 💡 3. ตั้งค่าเริ่มต้นโดยดึงค่ามาจาก URL (ถ้ามี) ถ้าไม่มีให้ใช้ค่า Default
+  const initialCategory = searchParams.get('category') || "All"
+  const initialPage = Number(searchParams.get('page')) || 1
+
+  const [activeFilter, setActiveFilter] = useState(initialCategory)
+  const [currentPage, setCurrentPage] = useState(initialPage)
+  
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false) 
+  const [expandedGroups, setExpandedGroups] = useState<string[]>([])
+  
+  const itemsPerPage = 8 
   const topRef = useRef<HTMLDivElement>(null)
+
+  // 💡 4. ดักจับการกดย้อนกลับ/ไปข้างหน้า (Back/Forward) บนเบราว์เซอร์ เพื่อให้หน้าเปลี่ยนตาม URL
+  useEffect(() => {
+    const urlCategory = searchParams.get('category') || "All"
+    const urlPage = Number(searchParams.get('page')) || 1
+    setActiveFilter(urlCategory)
+    setCurrentPage(urlPage)
+  }, [searchParams])
+
+  // 💡 5. ฟังก์ชันสำหรับอัปเดต URL แบบเนียนๆ (ไม่โหลดหน้าใหม่)
+  const updateURL = (newFilter: string, newPage: number) => {
+    const params = new URLSearchParams(searchParams.toString())
+    
+    if (newFilter && newFilter !== "All") {
+      params.set('category', newFilter)
+    } else {
+      params.delete('category')
+    }
+
+    if (newPage > 1) {
+      params.set('page', newPage.toString())
+    } else {
+      params.delete('page')
+    }
+
+    // สั่งเปลี่ยน URL โดยตั้งค่า scroll: false เพื่อไม่ให้จอกระตุกไปข้างบนสุดเอง
+    router.push(`${pathname}?${params.toString()}`, { scroll: false })
+  }
+
+  // 💡 6. ฟังก์ชันจัดการเมื่อกดเปลี่ยนหมวดหมู่
+  const handleFilterChange = (filterValue: string) => {
+    setActiveFilter(filterValue)
+    setCurrentPage(1) // เปลี่ยนหมวดหมู่ ต้องกลับไปหน้า 1 เสมอ
+    setIsDropdownOpen(false)
+    updateURL(filterValue, 1) // อัปเดต URL ทันที
+  }
+
+  // 💡 7. ฟังก์ชันจัดการเมื่อกดเปลี่ยนหน้า 1, 2, 3...
+  const handlePageChange = (page: number) => {
+    if (page === currentPage) return;
+    setCurrentPage(page);
+    updateURL(activeFilter, page) // อัปเดต URL ทันที
+    
+    // เลื่อนจอกลับไปข้างบนสุดของ List อย่างนุ่มนวล
+    setTimeout(() => {
+      if (topRef.current) {
+        topRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      } else {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+    }, 50);
+  }
 
   const structuredCategories = useMemo(() => {
     const cats = new Set<string>()
@@ -23,7 +86,7 @@ const [expandedGroups, setExpandedGroups] = useState<string[]>([])
     })
     const rawCategories = Array.from(cats).sort()
 
-    const groups: { label: string, isGroup: boolean, items: { fullValue: string, displayLabel: string }[] }[] = [
+    const groups: { label: string, isGroup: boolean, items: { fullValue: string, displayLabel: string, isSpecial?: boolean }[] }[] = [
       { label: "All", isGroup: false, items: [{ fullValue: "All", displayLabel: "All" }] }
     ]
 
@@ -62,6 +125,12 @@ const [expandedGroups, setExpandedGroups] = useState<string[]>([])
     groups.sort((a, b) => a.label.localeCompare(b.label))
     if (allGroup) groups.unshift(allGroup)
 
+    groups.push({ 
+      label: "Special Discount", 
+      isGroup: false, 
+      items: [{ fullValue: "SPECIAL_DISCOUNT", displayLabel: "SALE OFFERS %", isSpecial: true }] 
+    })
+
     return groups
   }, [collections])
 
@@ -73,27 +142,14 @@ const [expandedGroups, setExpandedGroups] = useState<string[]>([])
 
   const filteredCollections = activeFilter === "All" 
     ? collections 
-    : collections.filter(group => group.product_sup === activeFilter)
+    : activeFilter === "SPECIAL_DISCOUNT"
+      ? collections.filter(group => group.products?.some((p: any) => p.discount_value !== null))
+      : collections.filter(group => group.product_sup === activeFilter)
 
-  useEffect(() => {
-    setCurrentPage(1)
-  }, [activeFilter])
 
   const totalPages = Math.ceil(filteredCollections.length / itemsPerPage)
   const startIndex = (currentPage - 1) * itemsPerPage
   const paginatedCollections = filteredCollections.slice(startIndex, startIndex + itemsPerPage)
-
-  const handlePageChange = (page: number) => {
-    if (page === currentPage) return;
-    setCurrentPage(page);
-    setTimeout(() => {
-      if (topRef.current) {
-        topRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      } else {
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-      }
-    }, 50);
-  }
 
   const renderPagination = () => {
     const pages = [];
@@ -132,8 +188,10 @@ const [expandedGroups, setExpandedGroups] = useState<string[]>([])
           className="w-full flex items-center justify-between border-b border-[#C8A97E]/30 pb-3 text-[10px] sm:text-[11px] uppercase tracking-[0.2em] bg-transparent"
         >
           <span className="text-[#8C8A86] font-light">Filter by:</span>
-          <span className="text-[#2C2A26] font-medium flex items-center gap-2">
-            <span className="truncate max-w-[150px]">{activeFilter.replace(/^(Decorative|Doll|Wall Art|Decotative)\s+/i, '')}</span>
+          <span className={`font-medium flex items-center gap-2 ${activeFilter === "SPECIAL_DISCOUNT" ? "text-[#DC2626]" : "text-[#2C2A26]"}`}>
+            <span className="truncate max-w-[150px]">
+              {activeFilter === "SPECIAL_DISCOUNT" ? "SALE OFFERS %" : activeFilter.replace(/^(Decorative|Doll|Wall Art|Decotative)\s+/i, '')}
+            </span>
           </span>
         </button>
         
@@ -142,8 +200,26 @@ const [expandedGroups, setExpandedGroups] = useState<string[]>([])
             {structuredCategories.map((group) => {
               if (!group.isGroup) {
                 const item = group.items[0]
+                const isSpecial = item.isSpecial
+                
+                if (isSpecial) {
+                  return (
+                    <div key={item.fullValue} className="p-3 border-t border-[#E5E5E5] mt-2 bg-slate-50">
+                      <button 
+                        onClick={(e) => { e.preventDefault(); handleFilterChange(item.fullValue); }} 
+                        className={`w-full flex items-center justify-center gap-2 px-5 py-3.5 text-[10px] sm:text-[11px] uppercase tracking-[0.2em] font-bold border rounded-md transition-all shadow-sm ${activeFilter === item.fullValue ? 'bg-[#DC2626] border-[#DC2626] text-white' : 'bg-white border-[#DC2626] text-[#DC2626]'}`}
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4">
+                          <path fillRule="evenodd" d="M5.5 3A2.5 2.5 0 003 5.5v2.879a2.5 2.5 0 00.732 1.767l6.5 6.5a2.5 2.5 0 003.536 0l2.878-2.878a2.5 2.5 0 000-3.536l-6.5-6.5A2.5 2.5 0 008.38 3H5.5zM6 7a1 1 0 100-2 1 1 0 000 2z" clipRule="evenodd" />
+                        </svg>
+                        {item.displayLabel}
+                      </button>
+                    </div>
+                  )
+                }
+
                 return (
-                  <button key={item.fullValue} onClick={(e) => { e.preventDefault(); setActiveFilter(item.fullValue); setIsDropdownOpen(false); }} className={`w-full text-left px-5 py-4 text-[10px] sm:text-[11px] uppercase tracking-[0.15em] ${activeFilter === item.fullValue ? 'bg-[#F9F8F6] text-[#C8A97E] font-medium border-l-2 border-[#C8A97E]' : 'text-[#8C8A86] font-light hover:bg-[#F9F8F6] border-l-2 border-transparent'}`}>
+                  <button key={item.fullValue} onClick={(e) => { e.preventDefault(); handleFilterChange(item.fullValue); }} className={`w-full text-left px-5 py-4 text-[10px] sm:text-[11px] uppercase tracking-[0.15em] ${activeFilter === item.fullValue ? 'bg-[#F9F8F6] text-[#C8A97E] font-medium border-l-2 border-[#C8A97E]' : 'text-[#8C8A86] font-light hover:bg-[#F9F8F6] border-l-2 border-transparent'}`}>
                     {item.displayLabel}
                   </button>
                 )
@@ -152,7 +228,7 @@ const [expandedGroups, setExpandedGroups] = useState<string[]>([])
                 <div key={group.label} className="w-full">
                   <div className="px-5 py-3 text-[10px] sm:text-[11px] uppercase tracking-[0.15em] text-[#2C2A26] font-medium bg-[#F9F8F6]/50">{group.label}</div>
                   {group.items.map(item => (
-                    <button key={item.fullValue} onClick={(e) => { e.preventDefault(); setActiveFilter(item.fullValue); setIsDropdownOpen(false); }} className={`w-full text-left px-5 py-3 pl-8 text-[10px] sm:text-[11px] uppercase tracking-[0.15em] ${activeFilter === item.fullValue ? 'bg-[#F9F8F6] text-[#C8A97E] font-medium border-l-2 border-[#C8A97E]' : 'text-[#8C8A86] font-light hover:bg-[#F9F8F6] border-l-2 border-transparent'}`}>
+                    <button key={item.fullValue} onClick={(e) => { e.preventDefault(); handleFilterChange(item.fullValue); }} className={`w-full text-left px-5 py-3 pl-8 text-[10px] sm:text-[11px] uppercase tracking-[0.15em] ${activeFilter === item.fullValue ? 'bg-[#F9F8F6] text-[#C8A97E] font-medium border-l-2 border-[#C8A97E]' : 'text-[#8C8A86] font-light hover:bg-[#F9F8F6] border-l-2 border-transparent'}`}>
                       {item.displayLabel}
                     </button>
                   ))}
@@ -172,10 +248,32 @@ const [expandedGroups, setExpandedGroups] = useState<string[]>([])
               if (!group.isGroup) {
                 const item = group.items[0]
                 const isActive = activeFilter === item.fullValue
+                const isSpecial = item.isSpecial
+                
+                if (isSpecial) {
+                  return (
+                    <div key={item.fullValue} className="w-full mt-4 pt-6 border-t border-[#E5E5E5]">
+                      <button 
+                        onClick={(e) => { e.preventDefault(); handleFilterChange(item.fullValue); }} 
+                        className={`w-full py-3.5 px-4 flex items-center justify-center gap-2 border rounded-md transition-all duration-300 shadow-sm hover:shadow-md hover:-translate-y-0.5 ${isActive ? 'bg-[#DC2626] border-[#DC2626] text-white shadow-red-200' : 'bg-white border-[#DC2626] text-[#DC2626] hover:bg-[#DC2626] hover:text-white hover:border-[#DC2626]'}`}
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4">
+                          <path fillRule="evenodd" d="M5.5 3A2.5 2.5 0 003 5.5v2.879a2.5 2.5 0 00.732 1.767l6.5 6.5a2.5 2.5 0 003.536 0l2.878-2.878a2.5 2.5 0 000-3.536l-6.5-6.5A2.5 2.5 0 008.38 3H5.5zM6 7a1 1 0 100-2 1 1 0 000 2z" clipRule="evenodd" />
+                        </svg>
+                        <span className="text-[11px] uppercase tracking-[0.2em] font-bold text-center">
+                          {item.displayLabel}
+                        </span>
+                      </button>
+                    </div>
+                  )
+                }
+
                 return (
-                  <button key={item.fullValue} onClick={(e) => { e.preventDefault(); setActiveFilter(item.fullValue); }} className="relative group text-left transition-all duration-300 flex items-center w-full">
+                  <button key={item.fullValue} onClick={(e) => { e.preventDefault(); handleFilterChange(item.fullValue); }} className="relative group text-left transition-all duration-300 flex items-center w-full">
                     <span className={`absolute -left-5 w-1.5 h-1.5 rounded-full bg-[#C8A97E] transition-all duration-300 ${isActive ? 'opacity-100 scale-100' : 'opacity-0 scale-50'}`} />
-                    <span className={`text-[11px] uppercase tracking-[0.2em] transition-colors duration-300 ${isActive ? 'text-[#2C2A26] font-semibold' : 'text-[#8C8A86] font-light group-hover:text-[#C8A97E]'}`}>{item.displayLabel}</span>
+                    <span className={`text-[11px] uppercase tracking-[0.2em] transition-colors duration-300 ${isActive ? 'text-[#2C2A26] font-semibold' : 'text-[#8C8A86] font-light group-hover:text-[#C8A97E]'}`}>
+                      {item.displayLabel}
+                    </span>
                   </button>
                 )
               }
@@ -191,7 +289,7 @@ const [expandedGroups, setExpandedGroups] = useState<string[]>([])
                       {group.items.map(item => {
                         const isActive = activeFilter === item.fullValue
                         return (
-                          <button key={item.fullValue} onClick={(e) => { e.preventDefault(); setActiveFilter(item.fullValue); }} className="relative group text-left flex items-center">
+                          <button key={item.fullValue} onClick={(e) => { e.preventDefault(); handleFilterChange(item.fullValue); }} className="relative group text-left flex items-center">
                             <span className={`absolute -left-[17px] w-1.5 h-1.5 rounded-full bg-[#C8A97E] transition-all duration-300 ${isActive ? 'opacity-100 scale-100' : 'opacity-0 scale-50'}`} />
                             <span className={`text-[10.5px] uppercase tracking-[0.15em] transition-colors duration-300 ${isActive ? 'text-[#2C2A26] font-semibold' : 'text-[#8C8A86] font-light group-hover:text-[#C8A97E]'}`}>{item.displayLabel}</span>
                           </button>
@@ -208,7 +306,9 @@ const [expandedGroups, setExpandedGroups] = useState<string[]>([])
         <div className="flex-1 w-full flex flex-col relative z-10">
           {paginatedCollections.length === 0 ? (
             <div className="text-center py-20 border border-[#E5E5E5] rounded-sm bg-white/50 relative z-10">
-              <span className="text-[#C8A97E] text-[10px] uppercase tracking-[0.3em] font-light">No Collections in this category</span>
+              <span className="text-[#C8A97E] text-[10px] uppercase tracking-[0.3em] font-light">
+                {activeFilter === "SPECIAL_DISCOUNT" ? "No Discounts Available" : "No Collections in this category"}
+              </span>
             </div>
           ) : (
             <>
@@ -243,5 +343,5 @@ const [expandedGroups, setExpandedGroups] = useState<string[]>([])
         </div>
       </div>
     </div>
-  )
+  ) 
 }
