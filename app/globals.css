@@ -1,26 +1,110 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+/* ==========================================================================
+   1. ลงทะเบียนฟอนต์ LINE Seed Sans (มีครบทุกน้ำหนักในรูป image_5b9208.png)
+   ========================================================================== */
+
+/* Thin (น้ำหนักบาง) */
+@font-face {
+  font-family: 'LINE Seed Sans';
+  src: url('/LINESeedSans_W_Th.woff2') format('woff2'),
+       url('/LINESeedSans_W_Th.woff') format('woff');
+  font-weight: 100;
+  font-style: normal;
+  font-display: swap;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+/* Regular / Normal (น้ำหนักปกติ) */
+@font-face {
+  font-family: 'LINE Seed Sans';
+  src: url('/LINESeedSans_W_Rg.woff2') format('woff2'),
+       url('/LINESeedSans_W_Rg.woff') format('woff');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+/* Bold (น้ำหนักหนา) */
+@font-face {
+  font-family: 'LINE Seed Sans';
+  src: url('/LINESeedSans_W_Bd.woff2') format('woff2'),
+       url('/LINESeedSans_W_Bd.woff') format('woff');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* Extra Bold (น้ำหนักหนามาก) */
+@font-face {
+  font-family: 'LINE Seed Sans';
+  src: url('/LINESeedSans_W_XBd.woff2') format('woff2'),
+       url('/LINESeedSans_W_XBd.woff') format('woff');
+  font-weight: 800;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* Heavy (น้ำหนักหนาสุดขีด) */
+@font-face {
+  font-family: 'LINE Seed Sans';
+  src: url('/LINESeedSans_W_He.woff2') format('woff2'),
+       url('/LINESeedSans_W_He.woff') format('woff');
+  font-weight: 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+
+/* ==========================================================================
+   2. ลงทะเบียนฟอนต์ Optima (อ้างอิงไฟล์ .ttf ในรูป image_5b9208.png)
+   ========================================================================== */
+
+/* Regular (ตัวปกติ) */
+@font-face {
+  font-family: 'Optima';
+  src: url('/OPTIMA.TTF') format('truetype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* Italic (ตัวเอียง) */
+@font-face {
+  font-family: 'Optima';
+  src: url('/Optima_Italic.ttf') format('truetype');
+  font-weight: 400;
+  font-style: italic;
+  font-display: swap;
+}
+
+/* Medium (ตัวหนาปานกลาง) */
+@font-face {
+  font-family: 'Optima';
+  src: url('/Optima Medium.ttf') format('truetype');
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* Bold (ตัวหนา) */
+@font-face {
+  font-family: 'Optima';
+  src: url('/OPTIMA_B.TTF') format('truetype');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+
+/* ==========================================================================
+   3. ผูกฟอนต์และเซ็ตค่า Default ให้หน้าเว็บ
+   ========================================================================== */
+
+@theme {
+  --font-sans: 'LINE Seed Sans', system-ui, sans-serif;
+  --font-serif: 'Optima', 'Georgia', serif;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-sans);
 }

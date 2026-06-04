@@ -22,7 +22,7 @@ export default function PropFilterClient({ collections }: { collections: any[] }
   const [isDropdownOpen, setIsDropdownOpen] = useState(false) 
   const [expandedGroups, setExpandedGroups] = useState<string[]>([])
   
-  const itemsPerPage = 8 
+  const itemsPerPage = 40
   const topRef = useRef<HTMLDivElement>(null)
 
   // 💡 4. ดักจับการกดย้อนกลับ/ไปข้างหน้า (Back/Forward) บนเบราว์เซอร์ เพื่อให้หน้าเปลี่ยนตาม URL
