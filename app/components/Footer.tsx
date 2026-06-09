@@ -24,7 +24,7 @@ export default function Footer() {
 
       {/* 2. ครึ่งล่าง: ข้อมูล Footer หลัก */}
       {/* ปรับสีพื้นหลังเป็น #8C8878 ให้ได้โทน Olive/Khaki Brown แบบในภาพเรฟเป๊ะๆ */}
-      <div className="bg-[#4d4837] text-[#F9F6F0] px-6 py-12 md:px-12 md:py-16 w-full">
+      <div className="bg-[#A5815F] text-[#080600] px-6 py-12 md:px-12 md:py-16 w-full">
         <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-12 gap-8 md:gap-12 items-start">
           
           {/* ฝั่งซ้าย: กล่องขาวใส่ชื่อและที่อยู่บริษัท */}
@@ -82,10 +82,7 @@ export default function Footer() {
           </div>
         </div>
 
-        {/* ลิขสิทธิ์ */}
-        <div className="max-w-7xl mx-auto border-t border-white/20 mt-12 pt-6 text-center text-[10px] tracking-widest text-white/60 uppercase">
-          <p>© 2026 TERRA HOME STUDIO. ALL RIGHTS RESERVED.</p>
-        </div>
+        
       </div>
 
     </footer>
