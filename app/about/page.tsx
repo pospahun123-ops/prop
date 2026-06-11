@@ -110,26 +110,26 @@ export default function AboutPage() {
         </div>
 
         {/* Sculptural Vase at Bottom-Right */}
-        <div className="absolute w-full h-full max-w-[1300px] mx-auto left-0 right-0 pointer-events-none">
-          <div 
-            className={`absolute right-[5%] lg:right-[10%] z-20 w-[55vw] sm:w-[320px] lg:w-[420px] pointer-events-auto
-              transition-all duration-[1200ms] ease-[cubic-bezier(0.25,1,0.5,1)]
-              ${hasScrolledDown 
-                ? 'opacity-100 -bottom-40 lg:-bottom-64 translate-y-0' 
-                : 'opacity-0 bottom-[-200px] translate-y-24 pointer-events-none'
-              }
-            `}
-            style={hasScrolledDown ? { 
-              transform: `translateY(${-scrollY * 0.08}px)`
-            } : undefined}
-          >
-            <img
-              src="https://pub-258bd10e7e8c4a7690a74c54cfbdef93.r2.dev/original/1780904603569-581.webp?auto=format&fit=crop&w=800&q=80"
-              alt="Sculptural still life"
-              className="w-full object-cover aspect-square shadow-[0_30px_60px_rgba(0,0,0,0.15)] rounded-sm"
-            />
-          </div>
-        </div>
+<div className="absolute w-full h-full max-w-[1300px] mx-auto left-0 right-0 pointer-events-none">
+  <div 
+    className={`absolute right-[5%] lg:right-[10%] z-20 w-[55vw] sm:w-[320px] lg:w-[420px] pointer-events-auto
+      transition-all duration-[1200ms] ease-[cubic-bezier(0.25,1,0.5,1)]
+      ${hasScrolledDown 
+        ? '-bottom-50 lg:-bottom-99 translate-y-0' // 🌟 จุดที่ 1: เพิ่มค่าติดลบให้มากขึ้น (จากเดิม -bottom-40 กับ -bottom-64) เพื่อกดรูปให้ต่ำลงมา
+        : 'opacity-0 bottom-[-200px] translate-y-24 pointer-events-none'
+      }
+    `}
+    style={hasScrolledDown ? { 
+      transform: `translateY(${-scrollY * 0.04}px)` // 🌟 จุดที่ 2: ลดตัวคูณ Parallax ลง (จากเดิม 0.08 ให้เหลือ 0.04 หรือ 0.03) รูปจะได้ไม่ลอยพุ่งขึ้นมาเร็วเกินไปครับ
+    } : undefined}
+  >
+    <img
+      src="https://pub-258bd10e7e8c4a7690a74c54cfbdef93.r2.dev/original/1780904603569-581.webp?auto=format&fit=crop&w=800&q=80"
+      alt="Sculptural still life"
+      className="w-full object-cover aspect-square shadow-[0_30px_60px_rgba(0,0,0,0.15)] rounded-sm"
+    />
+  </div>
+</div>
       </section>
 
       {/* ================= MAIN CONTENT AREA ================= */}

@@ -1,17 +1,16 @@
-// app/components/Navbar.tsx
-"use client"
+'use client';
 
 import React, { useMemo, useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useSearchParams } from 'next/navigation';
 
-export default function Navbar({ collections = [] }: { collections?: any[] }) {
+export default function Navbar({ collections = [], isLightMode = false }: { collections?: any[], isLightMode?: boolean }) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   
-  // ดึงค่า category จาก URL มาเช็ค Active state ของ Dropdown Item
   const currentCategory = searchParams.get('category');
-  
+  const view = searchParams.get('view'); 
+
   const isActive = (path: string) => pathname.startsWith(path);
 
   const [expandedGroups, setExpandedGroups] = useState<string[]>([]);
@@ -24,7 +23,6 @@ export default function Navbar({ collections = [] }: { collections?: any[] }) {
     );
   };
 
-  // จัดกลุ่มข้อมูล Categories
   const structuredCategories = useMemo(() => {
     const finalCollections = collections && collections.length > 0 ? collections : [];
 
@@ -34,16 +32,19 @@ export default function Navbar({ collections = [] }: { collections?: any[] }) {
     });
     const rawCategories = Array.from(cats).sort();
 
-    const groups: { label: string, isGroup: boolean, items: { fullValue: string, displayLabel: string }[] }[] = [
+    const groups: { label: string, isGroup: boolean, items: { fullValue: string, displayLabel: string }[], isSpecial?: boolean }[] = [
       { label: "All", isGroup: false, items: [{ fullValue: "All", displayLabel: "All" }] }
     ];
 
     const decorativeItems: any[] = [];
     const dollItems: any[] = [];
     const wallArtItems: any[] = [];
+    const vaseItems: any[] = []; // 🌟 1. เพิ่มตะกร้าไว้รองรับกลุ่ม Vase ครับนาย
     const others: any[] = [];
 
     rawCategories.forEach(cat => {
+      const lowerCat = cat.toLowerCase(); // ทำเป็นพิมพ์เล็กก่อนเผื่อเช็คกันพลาด
+
       if (cat === "Candle Holder" || cat.startsWith("Decorative") || cat.startsWith("Decotative")) {
         let display = cat;
         if (cat.startsWith("Decorative ")) display = cat.replace("Decorative ", "");
@@ -55,6 +56,15 @@ export default function Navbar({ collections = [] }: { collections?: any[] }) {
       }
       else if (cat.startsWith("Wall Art ")) {
         wallArtItems.push({ fullValue: cat, displayLabel: cat.replace("Wall Art ", "") });
+      }
+      // 🌟 2. ดักจับหมวดหมู่ที่ขึ้นต้นด้วยคำว่า Vase
+      else if (lowerCat.startsWith("vase")) {
+        let display = cat;
+        // ตัดคำว่า Vase ด้านหน้าออกเพื่อให้เมนูย่อยดูคลีนขึ้น
+        if (lowerCat.startsWith("vase ")) {
+          display = cat.replace(/^Vase\s+/i, ""); 
+        }
+        vaseItems.push({ fullValue: cat, displayLabel: display });
       }
       else {
         others.push({ fullValue: cat, displayLabel: cat });
@@ -68,48 +78,91 @@ export default function Navbar({ collections = [] }: { collections?: any[] }) {
     if (decorativeItems.length > 0) groups.push({ label: "Decorative", isGroup: true, items: decorativeItems });
     if (dollItems.length > 0) groups.push({ label: "Doll", isGroup: true, items: dollItems });
     if (wallArtItems.length > 0) groups.push({ label: "Wall Art", isGroup: true, items: wallArtItems });
+    // 🌟 3. ดันกลุ่ม Vase เข้าไปโชว์ในเมนู
+    if (vaseItems.length > 0) groups.push({ label: "Vase", isGroup: true, items: vaseItems }); 
 
     const allGroup = groups.shift();
     groups.sort((a, b) => a.label.localeCompare(b.label));
     if (allGroup) groups.unshift(allGroup);
 
+    // เติมเมนูปุ่มส่วนลดพิเศษต่อท้ายลิสต์
+    groups.push({
+      label: "SALE OFFERS %",
+      isGroup: false,
+      items: [{ fullValue: "SPECIAL_DISCOUNT", displayLabel: "SALE OFFERS %" }],
+      isSpecial: true
+    });
+
     return groups;
   }, [collections]);
 
+  const isAboutPage = view === 'about';
+  const activeLightMode = isLightMode || isAboutPage;
+
+  const textColor = isAboutPage ? 'text-black' : (activeLightMode ? 'text-[#3A3835]' : 'text-white');
+  const textHoverColor = isAboutPage ? 'hover:text-black' : (activeLightMode ? 'hover:text-[#3A3835]' : 'hover:text-white');
+  const textMutedColor = isAboutPage ? 'text-black/70' : (activeLightMode ? 'text-[#8C8A86]' : 'text-white/80');
+  const borderColor = isAboutPage ? 'border-black' : (activeLightMode ? 'border-[#3A3835]' : 'border-white');
+  
+  const dropDownBg = "bg-[#D9D1C5]/40 border-white/20 backdrop-blur-2xl";
+
+  const hamburgerLineColor = activeLightMode ? 'bg-[#3A3835]' : 'bg-white';
+  
+  const navContainerClass = view === 'about' 
+    ? 'absolute top-0 bg-transparent' 
+    : (isLightMode ? 'sticky top-0 bg-[#EBE8E1]/90 border-b border-[#D5D2CA] backdrop-blur-md' : 'absolute top-0 bg-transparent');
+  
+  const logoFilter = activeLightMode ? 'brightness-0 contrast-200' : '';
+
   return (
-    <nav className="absolute top-0 left-0 right-0 z-50 bg-transparent px-8 md:px-12 py-5 md:py-6 flex justify-between items-center text-white w-full h-24 md:h-28">
+    <nav className={`left-0 right-0 z-50 px-8 md:px-12 py-5 md:py-6 flex justify-between items-center w-full h-24 md:h-28 transition-all duration-300 ${navContainerClass}`}>
       
-      {/* ฝั่งซ้าย: เมนูนำทางหลัก */}
-      <div className="hidden md:flex items-center space-x-8 lg:space-x-12 text-[11px] tracking-[0.25em] uppercase font-normal h-full">
+      <div className={`hidden md:flex items-center space-x-8 lg:space-x-12 text-[11px] tracking-[0.25em] uppercase font-normal h-full ${textColor}`}>
         <Link 
           href="/about" 
-          className={`transition duration-300 ${isActive('/about') ? 'text-white border-b border-white pb-1' : 'text-white/80 hover:text-white'}`}
+          className={`transition duration-300 ${isActive('/about') ? `${textColor} border-b ${borderColor} pb-1` : `${textMutedColor} ${textHoverColor}`}`}
         >
           About
         </Link>
 
-        {/* ปุ่ม HOME DECOR พร้อม Dropdown Menu */}
         <div className="relative group h-full flex items-center">
           <Link 
             href="/prop" 
-            className={`transition duration-300 ${isActive('/prop') ? 'text-white border-b border-white pb-1 font-medium' : 'text-white/80 hover:text-white'}`}
+            className={`transition duration-300 ${isActive('/prop') ? `${textColor} border-b ${borderColor} pb-1 font-medium` : `${textMutedColor} ${textHoverColor}`}`}
           >
             HOME DECOR
           </Link>
 
-          {/* Container ของ Dropdown (เปลี่ยนเป็นแบบ Glassmorphism) */}
           <div className="absolute top-full left-0 pt-4 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 z-50">
-            <div className="bg-white/10 backdrop-blur-md w-[280px] p-8 shadow-2xl border border-white/20 text-left rounded-sm">
+            <div className={`${dropDownBg} w-[280px] p-8 shadow-[0_20px_50px_rgba(0,0,0,0.15)] border text-left rounded-sm`}>
               
-              <div className="text-[#C8A97E] text-[10px] uppercase font-medium tracking-[0.3em] mb-5 border-b border-white/20 pb-4">
+              <div className="text-[#3A3835] dark:text-white/90 text-[10px] uppercase font-semibold tracking-[0.3em] mb-5 border-b border-black/10 dark:border-white/10 pb-4">
                 Categories
               </div>
 
               <div className="flex flex-col gap-4">
-                {structuredCategories.map((group) => {
+                {structuredCategories.map((group, idx) => {
+                  if (group.isSpecial) {
+                    const item = group.items[0];
+                    const isItemActive = currentCategory === item.fullValue;
+                    return (
+                      <Link
+                        key={item.fullValue}
+                        href={`/prop?category=${encodeURIComponent(item.fullValue)}`}
+                        className="w-full mt-2 pt-3 border-t border-black/5 dark:border-white/5 flex items-center group/item"
+                      >
+                        <span className={`text-[10px] uppercase tracking-[0.2em] font-bold flex items-center gap-1.5 transition-colors duration-300 ${isItemActive ? 'text-[#DC2626]' : 'text-[#c24b38] hover:text-[#DC2626]'}`}>
+                          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-3.5 h-3.5">
+                            <path fillRule="evenodd" d="M5.5 3A2.5 2.5 0 003 5.5v2.879a2.5 2.5 0 00.732 1.767l6.5 6.5a2.5 2.5 0 003.536 0l2.878-2.878a2.5 2.5 0 000-3.536l-6.5-6.5A2.5 2.5 0 008.38 3H5.5zM6 7a1 1 0 100-2 1 1 0 000 2z" clipRule="evenodd" />
+                          </svg>
+                          {group.label}
+                        </span>
+                      </Link>
+                    )
+                  }
+
                   if (!group.isGroup) {
                     const item = group.items[0];
-                    // เช็คว่าเมนูนี้กำลัง Active อยู่หรือไม่
                     const isItemActive = (item.fullValue === 'All' && !currentCategory) || (currentCategory === item.fullValue);
 
                     return (
@@ -118,10 +171,9 @@ export default function Navbar({ collections = [] }: { collections?: any[] }) {
                         href={`/prop${item.fullValue !== 'All' ? `?category=${encodeURIComponent(item.fullValue)}` : ''}`}
                         className="relative flex items-center w-full pl-4 group/item"
                       >
-                        {/* จุดกลมหน้าเมนูสีน้ำตาลทอง */}
-                        <span className={`absolute left-0 w-1.5 h-1.5 rounded-full bg-[#C8A97E] transition-all duration-300 ${isItemActive ? 'opacity-100 scale-100' : 'opacity-0 scale-50 group-hover/item:opacity-40 group-hover/item:scale-100'}`} />
+                        <span className={`absolute left-0 w-1.5 h-1.5 rounded-full bg-[#3A3835] dark:bg-white transition-all duration-300 ${isItemActive ? 'opacity-100 scale-100' : 'opacity-0 scale-50 group-hover/item:opacity-50 group-hover/item:scale-100'}`} />
                         
-                        <span className={`text-[11px] uppercase tracking-[0.2em] transition-colors duration-300 ${isItemActive ? 'text-[#C8A97E] font-medium' : 'text-white/90 hover:text-[#C8A97E]'}`}>
+                        <span className={`text-[10.5px] uppercase tracking-[0.2em] transition-colors duration-300 ${isItemActive ? 'text-black dark:text-white font-bold' : 'text-[#4A3E3D] dark:text-white/80 hover:text-black dark:hover:text-white'}`}>
                           {item.displayLabel}
                         </span>
                       </Link>
@@ -129,7 +181,6 @@ export default function Navbar({ collections = [] }: { collections?: any[] }) {
                   }
 
                   const isExpanded = expandedGroups.includes(group.label);
-                  // เช็คว่าลูกๆ ในกลุ่มนี้มีตัวไหนถูกเลือกอยู่ไหม
                   const isGroupActive = group.items.some(item => currentCategory === item.fullValue);
 
                   return (
@@ -138,24 +189,23 @@ export default function Navbar({ collections = [] }: { collections?: any[] }) {
                         onClick={(e) => toggleGroup(e, group.label)} 
                         className="flex items-center justify-between w-full text-left group/btn"
                       >
-                        <span className={`text-[11px] uppercase tracking-[0.2em] transition-colors duration-300 ${isGroupActive ? 'text-[#C8A97E]' : 'text-white/90 hover:text-[#C8A97E]'}`}>
+                        <span className={`text-[10.5px] uppercase tracking-[0.2em] transition-colors duration-300 ${isGroupActive ? 'text-black dark:text-white font-bold' : 'text-[#4A3E3D] dark:text-white/80 hover:text-black dark:hover:text-white'}`}>
                           {group.label}
                         </span>
-                        <span className="text-white/60 text-[13px] font-light transition-transform duration-300">
+                        <span className="text-[#4A3E3D] dark:text-white/60 text-[12px] font-light transition-transform duration-300">
                           {isExpanded ? '−' : '+'}
                         </span>
                       </button>
                       
-                      {/* ส่วนของ Sub-items เวลาสั่งคลี่ออกมา */}
                       <div className={`overflow-hidden transition-all duration-300 ease-in-out ${isExpanded ? 'max-h-[300px] mt-3 opacity-100' : 'max-h-0 opacity-0'}`}>
-                        <div className="flex flex-col gap-3 pl-3 ml-0.5 border-l border-white/20">
+                        <div className="flex flex-col gap-3 pl-3 ml-0.5 border-l border-black/10 dark:border-white/10">
                           {group.items.map(item => {
                             const isSubActive = currentCategory === item.fullValue;
                             return (
                               <Link 
                                 key={item.fullValue} 
                                 href={`/prop?category=${encodeURIComponent(item.fullValue)}`}
-                                className={`text-[10px] uppercase tracking-[0.15em] transition-colors duration-300 ${isSubActive ? 'text-[#C8A97E] font-medium' : 'text-white/60 hover:text-[#C8A97E]'}`}
+                                className={`text-[10px] uppercase tracking-[0.15em] transition-colors duration-300 ${isSubActive ? 'text-black dark:text-white font-bold' : 'text-[#4A3E3D]/80 dark:text-white/70 hover:text-black dark:hover:text-white'}`}
                               >
                                 {item.displayLabel}
                               </Link>
@@ -174,41 +224,39 @@ export default function Navbar({ collections = [] }: { collections?: any[] }) {
 
         <Link 
           href="/journal" 
-          className={`transition duration-300 ${isActive('/journal') ? 'text-white border-b border-white pb-1' : 'text-white/80 hover:text-white'}`}
+          className={`transition duration-300 ${isActive('/journal') ? `${textColor} border-b ${borderColor} pb-1` : `${textMutedColor} ${textHoverColor}`}`}
         >
           Art & Gallery
         </Link>
         <Link 
           href="/contact" 
-          className={`transition duration-300 ${isActive('/contact') ? 'text-white border-b border-white pb-1' : 'text-white/80 hover:text-white'}`}
+          className={`transition duration-300 ${isActive('/contact') ? `${textColor} border-b ${borderColor} pb-1` : `${textMutedColor} ${textHoverColor}`}`}
         >
           Contact
         </Link>
       </div>
 
-      {/* ตรงกลาง: โลโก้ */}
       <div className="absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2 text-center flex items-center justify-center select-none">
         <Link href="/" className="block transition-transform duration-300 hover:scale-105">
           <img 
             src="/logo.png" 
             alt="Terra Home Studio Logo" 
-            className="w-auto h-10 sm:h-11 md:h-14 lg:h-15 object-contain"
+            className={`w-auto h-10 sm:h-11 md:h-14 lg:h-15 object-contain ${logoFilter}`}
           />
         </Link>
       </div>
 
-      {/* ฝั่งขวา: Search & Menu Hamburger */}
-      <div className="flex items-center space-x-6 lg:space-x-8 text-white">
-        <button className="hover:text-white/60 transition duration-300 p-1 flex items-center justify-center" aria-label="Search">
+      <div className={`flex items-center space-x-6 lg:space-x-8 ${textColor}`}>
+        <button className={`hover:opacity-60 transition duration-300 p-1 flex items-center justify-center`} aria-label="Search">
           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-[18px] h-[18px] md:w-5 md:h-5">
             <path strokeLinecap="round" strokeLinejoin="round" d="m21 21-4.35-4.35M16.5 10.5a6 6 0 1 1-12 0 6 6 0 0 1 12 0Z" />
           </svg>
         </button>
         
-        <button className="hover:text-white/60 transition duration-300 flex flex-col justify-center space-y-[5px] group h-5 p-1" aria-label="Menu">
-          <span className="w-[22px] md:w-[25px] h-[1px] bg-white block transition-all duration-300 group-hover:bg-white/60"></span>
-          <span className="w-[22px] md:w-[25px] h-[1px] bg-white block transition-all duration-300 group-hover:bg-white/60"></span>
-          <span className="w-[22px] md:w-[25px] h-[1px] bg-white block transition-all duration-300 group-hover:bg-white/60"></span>
+        <button className="hover:opacity-60 transition duration-300 flex flex-col justify-center space-y-[5px] group h-5 p-1" aria-label="Menu">
+          <span className={`w-[22px] md:w-[25px] h-[1px] ${hamburgerLineColor} block transition-all duration-300 group-hover:opacity-60`}></span>
+          <span className={`w-[22px] md:w-[25px] h-[1px] ${hamburgerLineColor} block transition-all duration-300 group-hover:opacity-60`}></span>
+          <span className={`w-[22px] md:w-[25px] h-[1px] ${hamburgerLineColor} block transition-all duration-300 group-hover:opacity-60`}></span>
         </button>
       </div>
 

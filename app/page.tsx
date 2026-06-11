@@ -1,69 +1,114 @@
 'use client';
 
 import React, { useRef, useEffect, useState, useMemo, useCallback, Suspense } from 'react';
-import Footer from './components/Footer'; 
-
-export default function HomePage() {
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      if ('scrollRestoration' in history) {
-        history.scrollRestoration = 'manual';
-      }
-      window.scrollTo(0, 0);
-    }
-  }, []);
-
-  return (
-    <div className="bg-[#F9F6F0] text-[#4A3E3D] min-h-screen font-sans antialiased selection:bg-[#E5D3C3]">   
-      {/* ห่อเนื้อหาทั้งหมดด้วย Suspense เพื่อรองรับ useSearchParams 
-        ที่อาจจะถูกเรียกใช้ในคอมโพเนนต์ย่อยในช่วงทำการ Build
-      */}
-      <Suspense fallback={
-        <div className="min-h-screen bg-[#F9F6F0] flex items-center justify-center font-serif text-[#4A3E3D]">
-          Loading...
-        </div>
-      }>
-        <main className="overflow-hidden">
-          <HeroSection />
-          <BrandIntroduction />
-          <DecorativeObjects />
-          <VesselsTableware />
-          <BathDiffuserVessel />
-        </main>
-        <Footer />
-      </Suspense>
-    </div>
-  );
-}
-
+import { useSearchParams, useRouter } from 'next/navigation';
+// --- ย้ายปุ่ม "Our Story" ออกจากสไลด์แรก ไปไว้สไลด์อื่นๆ แทนตามสั่งครับนาย ---
 const heroSlides = [
   {
     src: "https://pub-258bd10e7e8c4a7690a74c54cfbdef93.r2.dev/original/1780478880815-990.webp",
     title: "Crafted for Calm Living.",
     subtitle: "Thoughtfully designed to bring warmth and harmony into your home.",
-    buttons: [ { label: "Decorative Objects" }, { label: "Vessels & Tableware" } ]
+    buttons: [] // หน้าแรกสุดคลีนๆ ปิดปุ่มเกลี้ยงตามรูปเป๊ะครับนาย!
   },
   {
     src: "https://pub-258bd10e7e8c4a7690a74c54cfbdef93.r2.dev/original/1780478898478-829.webp",
     title: "Decorative Objects",
     subtitle: "", 
-    buttons: [ { label: "Shop Collection" } ]
+    buttons: [ 
+      { label: "Shop Collection", target: "decorative" },
+      { label: "Our Story", target: "about" } // ใส่ปุ่ม Our Story เพิ่มให้ตรงนี้ครับ
+    ]
   },
   {
     src: "https://pub-258bd10e7e8c4a7690a74c54cfbdef93.r2.dev/original/1780478913463-688.webp",
     title: "Vessels & Tableware",
     subtitle: "",
-    buttons: [ { label: "Discover More" } ]
+    buttons: [ 
+      { label: "Discover More", target: "vessels" },
+      { label: "Our Story", target: "about" } // ใส่ปุ่ม Our Story เพิ่มให้ตรงนี้ครับ
+    ]
   },
   {
     src: "https://pub-258bd10e7e8c4a7690a74c54cfbdef93.r2.dev/original/1780478931773-588.webp",
-    title: "Vessels & Tableware",
+    title: "BATH & DIFFUSER VESSEL",
     subtitle: "",
-    buttons: [ { label: "Explore Range" } ]
+    buttons: [ 
+      { label: "Explore Range", target: "bath" },
+      { label: "Our Story", target: "about" } // ใส่ปุ่ม Our Story เพิ่มให้ตรงนี้ครับ
+    ]
   }
 ];
 
-export function HeroSection() {
+export default function HomePage() {
+  return (
+    <div className="bg-[#F9F6F0] text-[#4A3E3D] min-h-screen font-sans antialiased selection:bg-[#E5D3C3] flex flex-col">   
+      <Suspense fallback={
+        <div className="min-h-screen bg-[#F9F6F0] flex items-center justify-center font-serif text-[#4A3E3D]">
+          Loading...
+        </div>
+      }>
+        <HomeContent />
+      </Suspense>
+
+      <style dangerouslySetInnerHTML={{__html: `
+        @keyframes simpleFadeIn {
+          from { opacity: 0; transform: translateY(15px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-fade-in {
+          animation: simpleFadeIn 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+      `}} />
+    </div>
+  );
+}
+
+function HomeContent() {
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const view = searchParams.get('view');
+
+  // เพิ่มเงื่อนไขหน้า About (Brand Intro)
+  let activeTab = 0;
+  if (view === 'decorative') activeTab = 1;
+  else if (view === 'vessels') activeTab = 2;
+  else if (view === 'bath') activeTab = 3;
+  else if (view === 'about') activeTab = 4; // <-- หน้า Brand Intro คือ tab ที่ 4
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      if ('scrollRestoration' in history) {
+        history.scrollRestoration = 'manual';
+      }
+      window.scrollTo(0, 0); 
+    }
+  }, [activeTab]);
+
+  return (
+    <main className="flex-grow overflow-hidden relative">
+      
+      {/* หน้าแรก: ล็อคให้โชว์แค่ HeroSection เท่านั้น เลื่อนลงไม่ได้แน่นอน */}
+      {activeTab === 0 && (
+        <div className="animate-fade-in w-full h-screen overflow-hidden">
+          <HeroSection onNavigate={(targetView) => router.push(`/?view=${targetView}`)} />
+        </div>
+      )}
+
+      {/* หน้าอื่นๆ จะโชว์ขึ้นมาเมื่อถูกกดผ่าน URL Params */}
+      {activeTab !== 0 && (
+        <div className="animate-fade-in relative w-full min-h-screen">
+          {activeTab === 1 && <DecorativeObjects />}
+          {activeTab === 2 && <VesselsTableware />}
+          {activeTab === 3 && <BathDiffuserVessel />}
+          {activeTab === 4 && <BrandIntroduction />} {/* <-- ย้ายมาอยู่ตรงนี้แทน */}
+        </div>
+      )}
+
+    </main>
+  );
+}
+
+export function HeroSection({ onNavigate }: { onNavigate?: (view: string) => void }) {
   const [currentIndex, setCurrentIndex] = useState(0);
 
   useEffect(() => {
@@ -77,7 +122,7 @@ export function HeroSection() {
   const prevSlide = () => setCurrentIndex((prev) => (prev === 0 ? heroSlides.length - 1 : prev - 1));
 
   return (
-    <section className="relative w-full min-h-[85vh] md:min-h-0 md:aspect-video flex items-center justify-center px-4 md:px-6 overflow-hidden bg-[#2F2420]">
+    <section className="relative w-full h-screen flex items-center justify-center overflow-hidden bg-[#2F2420]">
       <style dangerouslySetInnerHTML={{__html: `
         @keyframes fadeInUp { from { opacity: 0; transform: translateY(25px); } to { opacity: 1; transform: translateY(0); } }
         .animate-fade-in-up { animation: fadeInUp 1.2s cubic-bezier(0.2, 0.8, 0.2, 1) forwards; opacity: 0; }
@@ -95,10 +140,12 @@ export function HeroSection() {
             }`}
           />
         ))}
-        <div className="absolute inset-0 bg-black/25"></div>
+        
+        {/* 🌟 เปลี่ยนตรงนี้ครับ: เอา bg-black/25 ออก แล้วใส่กราเดี้ยนไล่เฉดสีจากมืดด้านบน ลงไปนวลๆ ด้านล่างแทน */}
+        <div className="absolute inset-0 bg-gradient-to-b from-black/55 via-transparent to-[#2F2420]/50 pointer-events-none z-10"></div>
       </div>
 
-      <div key={currentIndex} className="absolute inset-0 z-10 flex flex-col items-center justify-center text-center px-4 pointer-events-none mt-[-3vh]">
+      <div key={currentIndex} className="absolute inset-0 z-20 flex flex-col items-center justify-center text-center px-4 pointer-events-none mt-[-3vh]">
         <h1 className="text-white text-3xl sm:text-5xl md:text-6xl lg:text-[4.5rem] tracking-wide mb-4 sm:mb-5 animate-fade-in-up delay-200 font-serif font-bold drop-shadow-[0_2px_8px_rgba(0,0,0,0.35)] px-2">
           {currentIndex === 0 ? "Crafted for Calm Living." : heroSlides[currentIndex].title}
         </h1>
@@ -113,10 +160,20 @@ export function HeroSection() {
             </p>
           )
         )}
+
+        {/* ถ้าเป็นสไลด์แรกสุด (currentIndex === 0) จะไม่มีการเรนเดอร์ปุ่มเด็ดขาด */}
         {currentIndex !== 0 && (
           <div className="flex flex-col sm:flex-row gap-3 sm:gap-6 animate-fade-in-up delay-600 pointer-events-auto mt-6">
             {heroSlides[currentIndex].buttons.map((btn, i) => (
-              <button key={i} className="px-6 sm:px-8 py-3 sm:py-3.5 border border-white/40 text-white/90 text-[9px] md:text-xs uppercase tracking-[0.25em] transition-all duration-500 backdrop-blur-xs bg-black/10 rounded-none font-sans font-normal hover:bg-white hover:text-black hover:border-white hover:scale-105">
+              <button 
+                key={i} 
+                onClick={() => {
+                  if (onNavigate && btn.target) {
+                    onNavigate(btn.target);
+                  }
+                }}
+                className="px-6 sm:px-8 py-3 sm:py-3.5 border border-white/40 text-white/90 text-[9px] md:text-xs uppercase tracking-[0.25em] transition-all duration-500 backdrop-blur-xs bg-black/10 rounded-none font-sans font-normal hover:bg-white hover:text-black hover:border-white hover:scale-105"
+              >
                 {btn.label}
               </button>
             ))}
@@ -124,7 +181,7 @@ export function HeroSection() {
         )}
       </div>
 
-      <div className="absolute inset-0 z-10 flex items-center justify-between px-2 sm:px-8 pointer-events-none">
+      <div className="absolute inset-0 z-20 flex items-center justify-between px-2 sm:px-8 pointer-events-none">
         <button onClick={prevSlide} className="pointer-events-auto w-8 h-8 sm:w-12 sm:h-12 flex items-center justify-center rounded-full bg-transparent text-white/30 hover:bg-white/10 hover:text-white transition-all border border-white/10">
           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4 sm:w-6 sm:h-6"><path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5 8.25 12l7.5-7.5" /></svg>
         </button>
@@ -133,15 +190,18 @@ export function HeroSection() {
         </button>
       </div>
 
-      <div className="absolute bottom-8 sm:bottom-12 z-10 flex gap-2.5">
+      <div className="absolute bottom-8 sm:bottom-12 z-20 flex gap-2.5">
         {heroSlides.map((_, idx) => (
-          <button key={idx} onClick={() => setCurrentIndex(idx)} className={`transition-all duration-500 rounded-full h-1.5 ${idx === currentIndex ? "w-6 bg-white" : "w-1.5 bg-white/40"}`} />
+          <button 
+            key={idx} 
+            onClick={() => setCurrentIndex(idx)} 
+            className={`transition-all duration-500 rounded-full h-1.5 ${idx === currentIndex ? "w-6 bg-white" : "w-1.5 bg-white/40"}`} 
+          />
         ))}
       </div>
     </section>
   );
 }
-
 export function BrandIntroduction() {
   const [isVisible, setIsVisible] = useState(false);
   const sectionRef = useRef<HTMLElement>(null);
@@ -155,14 +215,15 @@ export function BrandIntroduction() {
   }, []);
 
   return (
-    <section ref={sectionRef} className="w-full flex flex-col md:grid md:grid-cols-2 md:aspect-video bg-[#DFD6CE] overflow-hidden relative">
+    <section ref={sectionRef} className="w-full h-screen max-h-screen flex flex-col md:grid md:grid-cols-2 bg-[#DFD6CE] overflow-hidden relative">
       <style dangerouslySetInnerHTML={{__html: `
         @keyframes smoothReveal { 0% { opacity: 0; transform: translateY(35px); } 100% { opacity: 1; transform: translateY(0); } }
         .animate-smooth-reveal { animation: smoothReveal 1.4s cubic-bezier(0.16, 1, 0.3, 1) forwards; opacity: 0; }
         .delay-150 { animation-delay: 0.15s; } .delay-300 { animation-delay: 0.3s; } .delay-450 { animation-delay: 0.45s; } .delay-600 { animation-delay: 0.6s; }
       `}} />
 
-      <div className="relative w-full h-[50vh] md:h-full overflow-hidden">
+      {/* ฝั่งซ้าย: รูปห้อง */}
+      <div className="relative w-full h-[35vh] md:h-full overflow-hidden">
         <img 
           src="https://pub-258bd10e7e8c4a7690a74c54cfbdef93.r2.dev/original/1780388580146-928.webp?auto=format&fit=crop&w=1400&q=80" 
           alt="Interior Setup" 
@@ -171,35 +232,42 @@ export function BrandIntroduction() {
         <div className="absolute inset-0 bg-[#4A3E3D]/5"></div>
       </div>
 
-      <div className="relative w-full py-16 md:py-0 md:h-full flex flex-col justify-center items-center px-6 lg:px-12 text-center bg-[#DFD6CE]">
-        <div className="w-full max-w-[580px] flex flex-col items-center justify-center gap-8 md:gap-10">
-          <div className="space-y-0.5 md:space-y-1.5 w-full flex flex-col items-center">
-            <h3 className={`text-base sm:text-lg md:text-xl lg:text-[1.4rem] tracking-[0.05em] font-serif text-[#3D3130] font-bold ${isVisible ? 'animate-smooth-reveal delay-150' : 'opacity-0'}`}>
+      {/* ฝั่งขวา: คอนเทนต์บรรยาย */}
+      <div className="relative w-full h-[65vh] md:h-full flex flex-col justify-between md:justify-center items-center px-6 sm:px-12 lg:px-16 text-center bg-[#DFD6CE] pt-24 md:pt-28 pb-10 overflow-hidden">
+        <div className="w-full max-w-[540px] h-full md:h-auto flex flex-col items-center justify-center gap-6 md:gap-8 my-auto">
+          
+          {/* ส่วนหัวข้อ */}
+          <div className="space-y-1.5 md:space-y-2 w-full flex flex-col items-center">
+            <h3 className={`text-xs sm:text-sm md:text-base lg:text-[1.15rem] tracking-[0.05em] font-serif text-[#3D3130] font-bold ${isVisible ? 'animate-smooth-reveal delay-150' : 'opacity-0'}`}>
               At TERRA Home Studio,
             </h3>
-            <h2 className={`text-lg sm:text-xl md:text-2xl lg:text-[1.75rem] font-serif text-[#3D3130] leading-tight font-bold tracking-wide whitespace-nowrap ${isVisible ? 'animate-smooth-reveal delay-300' : 'opacity-0'}`}>
+            <h2 className={`text-base sm:text-lg md:text-xl lg:text-[1.5rem] font-serif text-[#3D3130] leading-tight font-bold tracking-wide whitespace-nowrap ${isVisible ? 'animate-smooth-reveal delay-300' : 'opacity-0'}`}>
               We believe beauty is found in simplicity.
             </h2>
           </div>
           
-          <div className={`w-full flex justify-center items-center ${isVisible ? 'animate-smooth-reveal delay-450' : 'opacity-0'}`}>
+          {/* ส่วนรูปแจกันตรงกลาง: 🌟 ปรับเพิ่มความสูงจาก 38vh เป็น 48vh เพื่อให้รูปใหญ่ขึ้นอย่างเห็นได้ชัดและสมดุลกับพื้นที่ */}
+          <div className={`w-full flex justify-center items-center flex-grow md:flex-initial max-h-[30vh] md:max-h-[48vh] overflow-hidden ${isVisible ? 'animate-smooth-reveal delay-450' : 'opacity-0'}`}>
             <img 
               src="https://pub-258bd10e7e8c4a7690a74c54cfbdef93.r2.dev/original/1780382081197-601.webp?auto=format&fit=crop&w=800&q=80" 
               alt="Ceramic Vases" 
-              className="w-[85%] md:w-[80%] lg:w-[75%] aspect-[3/4] object-cover drop-shadow-[0_8px_20px_rgba(0,0,0,0.05)] hover:scale-102 transition-transform duration-700 ease-out cursor-pointer"
+              className="max-h-full object-contain drop-shadow-[0_12px_30px_rgba(0,0,0,0.07)] hover:scale-102 transition-transform duration-700 ease-out cursor-pointer"
             />
           </div>
           
+          {/* ส่วนเนื้อความบรรยายด้านล่าง */}
           <div className={`w-full flex justify-center ${isVisible ? 'animate-smooth-reveal delay-600' : 'opacity-0'}`}>
-            <p className="text-[11px] sm:text-xs md:text-[13px] lg:text-[14.5px] text-[#3D3130] leading-relaxed font-normal text-left font-serif w-[95%] md:w-[90%] mx-auto opacity-95">
+            <p className="text-[10px] sm:text-xs md:text-[12px] lg:text-[13.5px] text-[#3D3130] leading-relaxed font-normal text-left font-serif w-full mx-auto opacity-95">
               Every ceramic piece is thoughtfully crafted to bring quiet warmth, subtle character, and a sense of calm into your space. A home is not defined by how much it holds, but by how it makes you feel. With TERRA Home Studio, let every detail speak softly, creating harmony in your home.
             </p>
           </div>
+
         </div>
       </div>
     </section>
   );
 }
+// ... โค้ดส่วนที่เหลือ (DecorativeObjects, VesselsTableware, BathDiffuserVessel) คงไว้ตามเดิมด้านล่างสุดได้เลยครับ
 
 export function DecorativeObjects() {
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -320,7 +388,7 @@ export function DecorativeObjects() {
       onPointerMove={onPointerMove}
       onPointerUp={onPointerUp}
       onPointerCancel={onPointerUp}
-      className={`relative w-full min-h-[550px] md:min-h-0 md:aspect-video flex flex-col justify-center overflow-hidden bg-[#F9F8F6] ${isDragging ? 'cursor-grabbing' : 'cursor-grab'}`}
+      className={`relative w-full h-screen flex flex-col justify-center overflow-hidden bg-[#F9F8F6] ${isDragging ? 'cursor-grabbing' : 'cursor-grab'}`}
       style={{ touchAction: 'pan-y' }}
     >
       <style dangerouslySetInnerHTML={{__html: `
@@ -337,6 +405,9 @@ export function DecorativeObjects() {
           className={`w-full h-full object-cover transition-opacity duration-1000 ${isVisible ? 'opacity-100' : 'opacity-0'}`} 
         />
       </div>
+
+      {/* 🌟 เพิ่มฟิล์มกราเดี้ยนน้ำตาลอุ่นที่ขอบบนของหน้านี้ด้วย เพื่อความต่อเนื่องของ Navbar */}
+      <div className="absolute top-0 left-0 w-full h-40 bg-gradient-to-b from-[#2F2420]/65 to-transparent pointer-events-none z-10"></div>
 
       <div className={`absolute top-[50%] md:top-[52%] left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-20 flex flex-col items-center pointer-events-none ${isVisible ? 'animate-fade-up' : 'opacity-0'}`} style={{ animationDelay: '0.2s' }}>
         <div className="w-[200px] h-[280px] sm:w-[320px] sm:h-[400px] md:w-[480px] md:h-[520px] border border-white/40 relative backdrop-blur-[1px]">
@@ -408,26 +479,32 @@ export function VesselsTableware() {
   }, []);
 
   return (
-    <section ref={sectionRef} className="w-full h-auto bg-[#DCD6CD] flex flex-col items-center overflow-hidden py-12 md:py-16 px-4 sm:px-8">
+    // ล็อคความสูงเป็น h-screen เพื่อให้พอดีจอ ไม่ให้มีสโครลบาร์
+    <section ref={sectionRef} className="relative w-full h-screen bg-[#DCD6CD] flex flex-col items-center overflow-hidden pt-24 pb-8 px-4 sm:px-8">
       <style dangerouslySetInnerHTML={{__html: `
         @keyframes floatUp { 0% { opacity: 0; transform: translateY(30px); } 100% { opacity: 1; transform: translateY(0); } }
         .animate-float-up { animation: floatUp 1s cubic-bezier(0.16, 1, 0.3, 1) forwards; opacity: 0; }
         .delay-100 { animation-delay: 0.1s; } .delay-200 { animation-delay: 0.2s; } .delay-300 { animation-delay: 0.3s; } .delay-450 { animation-delay: 0.4s; } .delay-500 { animation-delay: 0.5s; } .delay-600 { animation-delay: 0.6s; } .delay-700 { animation-delay: 0.7s; }
       `}} />
 
-      <div className="w-full h-full max-w-7xl mx-auto flex flex-col gap-6 md:gap-8">
-        <div className={`text-center flex items-center justify-center py-4 ${isVisible ? 'animate-float-up delay-100' : 'opacity-0'}`}>
-          <h2 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-serif tracking-[0.25em] text-[#A65E44] uppercase font-medium">
+      {/* 🌟 ฟิล์มกราเดี้ยนสีน้ำตาลเข้มเอสเพรสโซ่ (#2F2420) ไล่ระดับลงมาเพื่อขับให้ Navbar เด่นชัดขึ้นอย่างสมบูรณ์แบบ */}
+      <div className="absolute top-0 left-0 w-full h-44 bg-gradient-to-b from-[#2F2420] via-[#2F2420]/45 to-transparent pointer-events-none z-10"></div>
+
+      {/* ดันคอนเทนต์ขึ้นมาเลเยอร์ z-20 เพื่อไม่ให้สีพื้นหลังมาทับบดบังความคมชัดของรูปภาพ */}
+      <div className="relative z-20 w-full h-full max-w-7xl mx-auto flex flex-col gap-4 md:gap-6">
+        <div className={`text-center flex items-center justify-center py-2 ${isVisible ? 'animate-float-up delay-100' : 'opacity-0'}`}>
+          <h2 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-serif tracking-[0.25em] text-[#A65E44] uppercase font-medium drop-shadow-sm">
             VESSELS & TABLEWARE
           </h2>
         </div>
 
-        <div className="w-full grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 md:gap-6 pb-4">
-          <div className={`w-full overflow-hidden bg-[#C6BBAF] ${isVisible ? 'animate-float-up delay-200' : 'opacity-0'}`}>
-            <img src={items[0].img} alt={items[0].title} className="w-full h-full object-contain hover:scale-103 transition-transform duration-700 ease-out cursor-pointer select-none" />
+        {/* ใช้ Grid ให้เต็มพื้นที่ที่เหลือ (flex-grow) โดยไม่ล้นจอ */}
+        <div className="w-full flex-grow min-h-0 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 md:gap-6">
+          <div className={`w-full h-full overflow-hidden bg-[#C6BBAF] ${isVisible ? 'animate-float-up delay-200' : 'opacity-0'}`}>
+            <img src={items[0].img} alt={items[0].title} className="w-full h-full object-cover hover:scale-103 transition-transform duration-700 ease-out cursor-pointer select-none" />
           </div>
           
-          <div className={`w-full min-h-[300px] md:min-h-0 h-full bg-[#C1B4A6] flex flex-col justify-center items-center text-center p-6 sm:p-4 ${isVisible ? 'animate-float-up delay-300' : 'opacity-0'}`}>
+          <div className={`w-full h-full bg-[#C1B4A6] flex flex-col justify-center items-center text-center p-6 sm:p-4 ${isVisible ? 'animate-float-up delay-300' : 'opacity-0'}`}>
             <p className="font-serif text-[#A65E44] text-base md:text-xl leading-relaxed max-w-[220px] mb-4 sm:mb-6">
               Elegant Vessels<br />&<br />Tableware made to elevate your table.
             </p>
@@ -436,27 +513,26 @@ export function VesselsTableware() {
             </button>
           </div>
           
-          <div className={`w-full overflow-hidden bg-[#C6BBAF] ${isVisible ? 'animate-float-up delay-450' : 'opacity-0'}`}>
-            <img src={items[1].img} alt={items[1].title} className="w-full h-full object-contain hover:scale-103 transition-transform duration-700 ease-out cursor-pointer select-none" />
+          <div className={`w-full h-full overflow-hidden bg-[#C6BBAF] ${isVisible ? 'animate-float-up delay-450' : 'opacity-0'}`}>
+            <img src={items[1].img} alt={items[1].title} className="w-full h-full object-cover hover:scale-103 transition-transform duration-700 ease-out cursor-pointer select-none" />
           </div>
           
-          <div className={`w-full overflow-hidden bg-[#C6BBAF] ${isVisible ? 'animate-float-up delay-500' : 'opacity-0'}`}>
-            <img src={items[2].img} alt={items[2].title} className="w-full h-full object-contain hover:scale-103 transition-transform duration-700 ease-out cursor-pointer select-none" />
+          <div className={`w-full h-full overflow-hidden bg-[#C6BBAF] ${isVisible ? 'animate-float-up delay-500' : 'opacity-0'}`}>
+            <img src={items[2].img} alt={items[2].title} className="w-full h-full object-cover hover:scale-103 transition-transform duration-700 ease-out cursor-pointer select-none" />
           </div>
           
-          <div className={`w-full overflow-hidden bg-[#C6BBAF] ${isVisible ? 'animate-float-up delay-600' : 'opacity-0'}`}>
-            <img src={items[3].img} alt={items[3].title} className="w-full h-full object-contain hover:scale-103 transition-transform duration-700 ease-out cursor-pointer select-none" />
+          <div className={`w-full h-full overflow-hidden bg-[#C6BBAF] ${isVisible ? 'animate-float-up delay-600' : 'opacity-0'}`}>
+            <img src={items[3].img} alt={items[3].title} className="w-full h-full object-cover hover:scale-103 transition-transform duration-700 ease-out cursor-pointer select-none" />
           </div>
           
-          <div className={`w-full overflow-hidden bg-[#C6BBAF] ${isVisible ? 'animate-float-up delay-700' : 'opacity-0'}`}>
-            <img src={items[4].img} alt={items[4].title} className="w-full h-full object-contain hover:scale-103 transition-transform duration-700 ease-out cursor-pointer select-none" />
+          <div className={`w-full h-full overflow-hidden bg-[#C6BBAF] ${isVisible ? 'animate-float-up delay-700' : 'opacity-0'}`}>
+            <img src={items[4].img} alt={items[4].title} className="w-full h-full object-cover hover:scale-103 transition-transform duration-700 ease-out cursor-pointer select-none" />
           </div>
         </div>
       </div>
     </section>
   );
 }
-
 export function BathDiffuserVessel() {
   const [isVisible, setIsVisible] = useState(false);
   const sectionRef = useRef<HTMLElement>(null);
@@ -477,43 +553,44 @@ export function BathDiffuserVessel() {
   }, []);
 
   return (
-    <section ref={sectionRef} className="w-full flex flex-col overflow-hidden bg-[#dbcfc1]">
+    <section ref={sectionRef} className="relative w-full h-screen max-h-screen flex flex-col overflow-hidden bg-[#dbcfc1]">
       <style dangerouslySetInnerHTML={{__html: `
         @keyframes smoothFloatUp { 0% { opacity: 0; transform: translateY(30px); } 100% { opacity: 1; transform: translateY(0); } }
         .animate-smooth-up { animation: smoothFloatUp 1.2s cubic-bezier(0.16, 1, 0.3, 1) forwards; opacity: 0; }
         .delay-150 { animation-delay: 0.15s; } .delay-300 { animation-delay: 0.3s; } .delay-450 { animation-delay: 0.45s; } .delay-600 { animation-delay: 0.6s; } .delay-750 { animation-delay: 0.75s; } .delay-900 { animation-delay: 0.9s; }
       `}} />
 
-      <div className="relative w-full">
+      {/* ครึ่งบน (แบนเนอร์) */}
+      <div className="relative w-full h-[60%] overflow-hidden">
         <img 
           src="https://pub-258bd10e7e8c4a7690a74c54cfbdef93.r2.dev/original/1780563503635-651.webp?auto=format&fit=crop&w=1800&q=80" 
           alt="Bath & Diffuser Banner" 
-          className={`w-full h-auto block transition-all duration-[2000ms] ease-out ${isVisible ? 'opacity-100' : 'opacity-0'}`}
+          className={`absolute inset-0 w-full h-full object-cover transition-all duration-[2000ms] ease-out ${isVisible ? 'opacity-100 scale-100' : 'opacity-0 scale-105'}`}
         />
         
-        <div className={`absolute top-[8%] md:top-[12%] left-0 right-0 w-full text-center px-4 ${isVisible ? 'animate-smooth-up delay-150' : 'opacity-0'}`}>
-          <h2 className="text-base sm:text-2xl md:text-3xl lg:text-[2.5rem] font-serif tracking-[0.15em] text-white uppercase font-bold drop-shadow-md">
+        {/* ฟิล์มกราเดี้ยนสีน้ำตาลเข้มพรีเมียม #2F2420 */}
+        <div className="absolute inset-0 bg-gradient-to-b from-[#2F2420] via-[#2F2420]/40 to-transparent z-10 pointer-events-none"></div>
+        
+        <div className={`absolute top-[20%] md:top-[60%] left-0 right-0 w-full text-center px-4 z-20 ${isVisible ? 'animate-smooth-up delay-150' : 'opacity-0'}`}>
+          <h2 className="text-base sm:text-2xl md:text-3xl lg:text-[2.5rem] font-serif tracking-[0.15em] text-white uppercase font-bold drop-shadow-[0_4px_12px_rgba(0,0,0,0.55)]">
             BATH & DIFFUSER VESSEL
           </h2>
         </div>
         
-        <div className={`absolute top-[45%] md:top-[45%] right-[5%] md:right-[6%] text-right ${isVisible ? 'animate-smooth-up delay-300' : 'opacity-0'}`}>
-          <p className="text-[6px] sm:text-[9px] md:text-xs lg:text-[13px] text-white/95 leading-[1.6] md:leading-loose font-light drop-shadow-md font-sans">
-            In a world that moves fast,<br className="hidden md:block"/> true luxury is found in slowing down.<br />
-            Crafted to Slow the Moment Down is<br className="hidden md:block"/> designed to bring calm into everyday<br />
-            spaces — an invitation to pause,<br className="hidden md:block"/> breathe, and simply be.
-          </p>
-        </div>
+        
       </div>
 
-      <div className="w-full #E4DED7 py-12 md:py-20 flex justify-center">
-        <div className="w-full max-w-7xl px-6 md:px-12 lg:px-16 grid grid-cols-2 md:grid-cols-4 gap-6 sm:gap-8 md:gap-10">
+      {/* ครึ่งล่าง (4 รูปเล็ก) */}
+      {/* 🌟 ขยายพื้นที่รวมเป็น max-w-6xl และขยายช่องไฟแนวตั้งให้ห่างโปร่งโล่งสวยงามด้วย gap-10 md:gap-16 lg:gap-20 */}
+      <div className="w-full h-[40%] bg-[#E4DED7] flex justify-center items-center py-4 md:py-6">
+        <div className="w-full max-w-6xl px-8 md:px-12 grid grid-cols-2 md:grid-cols-4 gap-10ฆ md:gap-16 lg:gap-20 items-center justify-center">
           {subItems.map((item, index) => {
             const delays = ['delay-450', 'delay-600', 'delay-750', 'delay-900'];
             return (
               <div 
                 key={item.id} 
-                className={`w-full aspect-square overflow-hidden shadow-[0_4px_12px_rgba(0,0,0,0.05)] bg-[#DCD6CD] ${isVisible ? 'animate-smooth-up ' + delays[index] : 'opacity-0'}`}
+                // 🌟 ปลดล็อกขยายความสูงสูงสุดขึ้นเป็น max-h-[20vh] md:max-h-[26vh] เพื่อให้รูปใหญ่เด่นเต็มตา สัดส่วนสมดุลพอดีเป๊ะครับ
+                className={`w-full aspect-square overflow-hidden shadow-[0_4px_12px_rgba(0,0,0,0.03)] bg-[#DCD6CD] mx-auto max-h-[20vh] md:max-h-[26vh] ${isVisible ? 'animate-smooth-up ' + delays[index] : 'opacity-0'}`}
               >
                 <img 
                   src={item.img} 

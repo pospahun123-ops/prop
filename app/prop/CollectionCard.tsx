@@ -1,4 +1,3 @@
-// app/prop/CollectionCard.tsx
 "use client"
 
 import { useState, useEffect } from "react"
@@ -8,7 +7,7 @@ interface ProductSlide {
   image_url: string
   price: number | null
   sku: string
-  name?: string // ✅ เพิ่มบรรทัดนี้
+  name?: string 
   discount_value?: number | null 
   discount_type?: 'PERCENT' | 'FIXED' | null
 }
@@ -22,14 +21,11 @@ export default function CollectionCard({
 }) {
   const [currentIndex, setCurrentIndex] = useState(0)
 
-  // ให้สไลด์ภาพเปลี่ยนเองทุกๆ 3 วินาที
   useEffect(() => {
     if (slides.length <= 1) return;
-    
     const timer = setInterval(() => {
       setCurrentIndex((prev) => (prev + 1) % slides.length)
     }, 3000) 
-    
     return () => clearInterval(timer)
   }, [slides.length])
 
@@ -43,64 +39,37 @@ export default function CollectionCard({
   return (
     <Link 
       href={targetHref} 
-      className="flex flex-col group cursor-pointer"
+      className="flex flex-col items-center group cursor-pointer w-full h-full justify-between"
     >
-      <div className="aspect-[4/5] relative overflow-hidden bg-[#F5F4F0] mb-3 sm:mb-4">
-        
-        {/* ✅ ย้าย mix-blend-multiply มาไว้ที่กล่องนี้แทน เพื่อให้พื้นหลังขาวของรูป กลืนไปกับสีเบจด้านบน */}
-        <div className="absolute inset-0 w-full h-full transition-transform duration-700 ease-out group-hover:scale-105 transform-gpu will-change-transform mix-blend-multiply">
-          {slides.length > 0 ? (
-            slides.map((slide, idx) => (
-              <img 
-                key={idx}
-                src={slide.image_url || ""} 
-                alt={group.name || group.id} 
-                // ✅ ถอด mix-blend-multiply ออกจากบรรทัดนี้ ป้องกันการทับซ้อน
-                className={`absolute inset-0 object-contain w-full h-full p-4 sm:p-8 transition-opacity duration-1000 ease-in-out transform-gpu [backface-visibility:hidden]
-                  ${idx === currentIndex ? 'opacity-100 z-10' : 'opacity-0 z-0'}
-                `}
-              />
-            ))
-          ) : (
-            <div className="flex flex-col items-center justify-center w-full h-full text-[#C8A97E] opacity-50">
-              <span className="text-[9px] sm:text-[10px] uppercase font-light tracking-[0.2em]">No Image</span>
-            </div>
-          )}
-        </div>
-        
-        {/* จุดบอกตำแหน่งรูป */}
-        {slides.length > 1 && (
-          <div className="absolute bottom-3 sm:bottom-4 left-0 right-0 flex justify-center gap-1 z-20">
-            {slides.map((_, idx) => (
-              <div 
-                key={idx} 
-                className={`h-[2px] transition-all duration-500 ${
-                  idx === currentIndex ? 'w-3 sm:w-4 bg-[#C8A97E]' : 'w-1.5 sm:w-2 bg-[#C8A97E]/30'
-                }`}
-              />
-            ))}
-          </div>
+      {/* กล่องใส่รูปสินค้า ละลายพื้นหลังขาวเนียนๆ เข้ากับหน้าเว็บ */}
+      <div className="w-full aspect-square relative mb-5 flex items-center justify-center bg-[#EBE8E1] mix-blend-multiply">
+        {slides.length > 0 ? (
+          slides.map((slide, idx) => (
+            <img 
+              key={idx}
+              src={slide.image_url || ""} 
+              alt={group.name || group.id} 
+              className={`absolute inset-0 object-contain w-full h-full p-2 transition-opacity duration-500 ease-in-out mix-blend-multiply
+                ${idx === currentIndex ? 'opacity-100 z-10' : 'opacity-0 z-0'}
+              `}
+            />
+          ))
+        ) : (
+          <span className="text-[10px] uppercase font-light tracking-[0.2em] text-[#8C8A86]">No Image</span>
         )}
       </div>
 
-      {/* รายละเอียดสินค้า */}
-      <div className="flex flex-col items-center text-center px-1 sm:px-2">
-        
-        
-        {/* ✅ เพิ่มโค้ดนี้เพื่อแสดงชื่อสินค้า (ถ้าต้องการแสดงแยกจากชื่อ Collection) */}
-        {currentSlide.name && (
-          <span className="text-[#2C2A26] text-xl font-medium mb-1">
-            {currentSlide.name}
-          </span>
-        )}
-        
-      
+      {/* ส่วนรายละเอียดสินค้า: ปรับขนาดตัวอักษรและราคาให้ใหญ่และคมชัดขึ้นตามบรีฟ */}
+      <div className="flex flex-col items-center text-center mt-auto px-2">
+        {/* 🌟 ปรับชื่อสินค้าให้ใหญ่ขึ้นจาก 8px เป็น 10px/11px และปรับเป็น font-medium เพื่อความคมชัด */}
+        <span className="text-[#3A3835] text-[10px] sm:text-[11px] uppercase tracking-[0.25em] font-medium text-center mb-1.5">
+          {currentSlide.name ? currentSlide.name.substring(0, 25) : "PRODUCT"}
+        </span>
 
-        {/* ✅ Logic คำนวณและแสดงผลราคา (แบบมี/ไม่มีส่วนลด) */}
         {(() => {
           if (displayPrice === null || displayPrice <= 0) {
             return (
-              <p className="text-[#8C8A86] text-[9px] sm:text-[10px] tracking-widest uppercase mt-1">
+              <p className="text-[#8C8A86] text-[9px] tracking-widest uppercase font-light mt-0.5">
                 Price upon request
               </p>
             )
@@ -111,7 +80,6 @@ export default function CollectionCard({
           let isDiscounted = false
           let discountLabel = ""
 
-          // เช็คว่ามีส่วนลดถูกส่งมาด้วยไหม
           if (currentSlide.discount_value && currentSlide.discount_type) {
             isDiscounted = true
             if (currentSlide.discount_type === 'PERCENT') {
@@ -124,23 +92,23 @@ export default function CollectionCard({
           }
 
           return isDiscounted ? (
-            // แบบมีส่วนลด: โชว์ราคาเดิมขีดฆ่า + Badge สีทอง + ราคาใหม่
-            <div className="flex flex-col items-center gap-1 mt-1">
-              <div className="flex items-center gap-2">
-                <span className="text-[#8C8A86] text-[10px] line-through font-mono opacity-60">
+            // 🏷️ แบบมีส่วนลด: ปรับขนาดราคาเดิมและ Badge ขึ้นเป็น 10px และราคาลดจริงขึ้นเป็น 12px
+            <div className="flex flex-col items-center gap-0.5 mt-0.5">
+              <div className="flex items-center gap-2 text-[10px] font-mono tracking-wider">
+                <span className="text-[#8C8A86] line-through opacity-60">
                   THB {originalPrice.toLocaleString()}
                 </span>
-                <span className="text-[#C8A97E] text-[8px] sm:text-[9px] font-semibold tracking-wider border border-[#C8A97E]/40 bg-[#C8A97E]/5 px-1.5 py-0.5 rounded-sm">
+                <span className="text-[#DC2626] font-semibold opacity-90">
                   {discountLabel}
                 </span>
               </div>
-              <p className="text-[#2C2A26] text-[11px] sm:text-xs font-semibold tracking-widest font-mono">
+              <p className="text-[#3A3835] text-[12px] font-semibold tracking-widest font-mono">
                 THB {finalPrice.toLocaleString()}
               </p>
             </div>
           ) : (
-            // แบบไม่มีส่วนลด: โชว์ปกติ
-            <p className="text-[#2C2A26] text-[11px] sm:text-xs font-semibold tracking-widest font-mono mt-1">
+            // 💵 แบบราคาทั่วไป: ขยายขนาดฟอนต์จาก 10px ขึ้นเป็น 12px และเพิ่มความหนาเป็น font-medium เพื่อความพรีเมียม
+            <p className="text-[#3A3835] text-[12px] font-medium tracking-widest font-mono mt-0.5 opacity-95">
               THB {originalPrice.toLocaleString()}
             </p>
           )

@@ -1,4 +1,3 @@
-// app/prop/BranchSelector.tsx
 "use client"
 
 import { useState, useRef, useEffect } from "react"
@@ -12,27 +11,23 @@ interface Branch {
   longitude?: number
 }
 
-export default function BranchSelector({ branches }: { branches: Branch[] }) {
+// รับ isLightPage มาจาก Navbar เพื่อปรับสีตัวหนังสือให้เข้ากับหน้าเว็บ
+export default function BranchSelector({ branches, isLightPage = true }: { branches: Branch[], isLightPage?: boolean }) {
   const router = useRouter()
   const searchParams = useSearchParams()
   
-  // อ่านค่า branch จาก URL ถ้าไม่มีให้ถือว่าเป็น "all"
   const currentBranchId = searchParams.get("branch") || "all"
 
   const [isOpen, setIsOpen] = useState(false)
   const dropdownRef = useRef<HTMLDivElement>(null)
 
-  // 💡 สร้างตัวเลือก "All Locations"
   const allOption: Branch = {
     id: "all",
     branch_code: "ALL",
     branch_name: "All",
   }
 
-  // รวม All เข้าไปกับสาขาที่ดึงมาจาก DB
   const options = [allOption, ...branches]
-  
-  // หาสาขาที่ถูกเลือกอยู่ปัจจุบัน
   const selectedBranch = options.find(b => b.id.toString() === currentBranchId) || allOption
 
   useEffect(() => {
@@ -45,18 +40,14 @@ export default function BranchSelector({ branches }: { branches: Branch[] }) {
     return () => document.removeEventListener("mousedown", handleClickOutside)
   }, [])
 
-  // ฟังก์ชันตอนกดเลือกสาขา ให้เปลี่ยน URL (เช่น /prop?branch=1)
   const handleSelect = (branchId: string | number) => {
     setIsOpen(false)
     const params = new URLSearchParams(searchParams.toString())
-    
     if (branchId === "all") {
-      params.delete("branch") // ถ้าเลือก All ให้ลบ param ออกเพื่อให้ URL สะอาด
+      params.delete("branch")
     } else {
       params.set("branch", branchId.toString())
     }
-    
-    // อัปเดต URL โดยไม่เปลี่ยนหน้า (scroll: false เพื่อไม่ให้หน้าเด้งกลับไปบนสุด)
     router.push(`?${params.toString()}`, { scroll: false })
   }
 
@@ -64,43 +55,50 @@ export default function BranchSelector({ branches }: { branches: Branch[] }) {
 
   return (
     <div className="relative flex items-center" ref={dropdownRef}>
+      {/* 🌟 ปุ่มหมุดปักพร้อมคำว่า ALL ชิดขวา */}
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center gap-2 text-[10px] font-medium tracking-[0.2em] text-[#8C8A86] hover:text-[#C8A97E] transition-colors uppercase"
+        className={`flex items-center gap-1.5 text-[11px] font-medium tracking-[0.25em] uppercase transition-colors duration-300
+          ${isLightPage ? 'text-[#8C8A86] hover:text-[#3A3835]' : 'text-white/80 hover:text-white'}
+        `}
       >
-        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-[18px] h-[18px]">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
+          <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1 1 15 0Z" />
         </svg>
-        <span className="truncate max-w-[120px]">{selectedBranch.branch_name}</span>
+        <span className="truncate max-w-[150px]">{selectedBranch.branch_name}</span>
       </button>
 
-      {/* Dropdown Menu */}
+      {/* 🌟 Dropdown Menu ดีไซน์ตามเรฟ (พื้นขาว, ตัวหนังสือทอง) */}
       <div 
-        className={`absolute top-full right-0 mt-6 w-56 bg-white border border-[#E5E5E5] shadow-2xl transition-all duration-300 origin-top-right z-[100] ${
+        className={`absolute top-full right-0 mt-6 w-[240px] bg-[#FDFCFB] border border-[#E5E5E5] shadow-[0_10px_40px_-10px_rgba(0,0,0,0.08)] transition-all duration-300 origin-top-right z-[100] ${
           isOpen ? 'opacity-100 scale-100 pointer-events-auto' : 'opacity-0 scale-95 pointer-events-none'
         }`}
       >
-        <div className="px-5 py-3 text-[9px] uppercase tracking-[0.3em] text-[#C8A97E] font-medium border-b border-[#F9F8F6] bg-[#F9F8F6]/50">
+        <div className="px-6 py-4 text-[10px] uppercase tracking-[0.25em] text-[#C8A97E] font-medium border-b border-[#F0EFEB]">
           Select Location
         </div>
-        <div className="max-h-[40vh] overflow-y-auto py-1">
-          {options.map((branch) => (
-            <button
-              key={branch.id}
-              onClick={() => handleSelect(branch.id)}
-              className={`w-full text-left px-5 py-3 text-[10px] uppercase tracking-[0.15em] transition-colors flex items-center justify-between ${
-                selectedBranch.id.toString() === branch.id.toString()
-                  ? 'bg-[#F9F8F6] text-[#C8A97E] font-medium'
-                  : 'text-[#8C8A86] hover:bg-[#F9F8F6] hover:text-[#2C2A26]'
-              }`}
-            >
-              {branch.branch_name}
-              {selectedBranch.id.toString() === branch.id.toString() && (
-                <div className="w-1.5 h-1.5 rounded-full bg-[#C8A97E]" />
-              )}
-            </button>
-          ))}
+        <div className="flex flex-col py-2">
+          {options.map((branch) => {
+            const isActive = selectedBranch.id.toString() === branch.id.toString()
+            return (
+              <button
+                key={branch.id}
+                onClick={() => handleSelect(branch.id)}
+                className={`w-full text-left px-6 py-3.5 text-[10px] uppercase tracking-[0.2em] transition-colors flex items-center justify-between group ${
+                  isActive
+                    ? 'text-[#C8A97E] font-medium bg-[#F9F8F6]/50'
+                    : 'text-[#8C8A86] hover:bg-[#F9F8F6] hover:text-[#3A3835]'
+                }`}
+              >
+                {branch.branch_name}
+                {/* จุดกลมสีทองสำหรับสาขาที่ถูกเลือก */}
+                {isActive && (
+                  <div className="w-1.5 h-1.5 rounded-full bg-[#C8A97E]" />
+                )}
+              </button>
+            )
+          })}
         </div>
       </div>
     </div>
