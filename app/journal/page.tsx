@@ -1,6 +1,7 @@
 "use client";
 
-import { motion } from "framer-motion";
+// 🌟 1. นำเข้า Variants เพิ่มเข้ามาตรงนี้ครับ
+import { motion, Variants } from "framer-motion";
 import { ArrowRight } from "lucide-react";
 
 const JOURNALS = [
@@ -28,7 +29,8 @@ const JOURNALS = [
 ];
 
 export default function JournalPage() {
-  const containerVariants = {
+  // 🌟 2. ใส่ : Variants ต่อท้ายชื่อตัวแปร
+  const containerVariants: Variants = {
     hidden: { opacity: 0 },
     visible: {
       opacity: 1,
@@ -36,7 +38,8 @@ export default function JournalPage() {
     }
   };
 
-  const cardVariants = {
+  // 🌟 3. ใส่ : Variants ต่อท้ายชื่อตัวแปร
+  const cardVariants: Variants = {
     hidden: { y: 40, opacity: 0 },
     visible: {
       y: 0,

@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { motion } from "framer-motion";
+// 🌟 1. นำเข้า Variants เพิ่มเข้ามาตรงนี้ครับ
+import { motion, Variants } from "framer-motion"; 
 import { Mail, Phone, MapPin, ArrowRight } from "lucide-react";
 
 export default function ContactPage() {
@@ -12,7 +13,8 @@ export default function ContactPage() {
     console.log(formData);
   };
 
-  const containerVariants = {
+  // 🌟 2. ใส่ : Variants ต่อท้ายชื่อตัวแปร เพื่อกำกับ Type ครับ
+  const containerVariants: Variants = {
     hidden: { opacity: 0 },
     visible: {
       opacity: 1,
@@ -20,7 +22,8 @@ export default function ContactPage() {
     }
   };
 
-  const itemVariants = {
+  // 🌟 3. ใส่ : Variants ตรงนี้ด้วยเหมือนกันครับ
+  const itemVariants: Variants = {
     hidden: { y: 30, opacity: 0 },
     visible: {
       y: 0,
