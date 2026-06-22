@@ -305,8 +305,9 @@ export default function Navbar({ collections = [], isLightMode = false }: { coll
       <nav className={`left-0 right-0 z-50 px-6 md:px-8 xl:px-12 py-3 md:py-4 flex justify-between items-center w-full h-20 md:h-24 transition-all duration-300 ${navContainerClass}`}>
         
         {/* ---------------- 1. ฝั่งซ้าย (basis-0 min-w-0 คือเคล็ดลับกันจอแตก) ---------------- */}
-        <div className="flex-1 basis-0 min-w-0 flex items-center justify-start">
-          <div className={`hidden lg:flex items-center space-x-8 lg:space-x-12 text-[11px] tracking-[0.25em] uppercase font-normal h-full ${textColor}`}>
+       <div className="hidden lg:flex flex-1 basis-0 min-w-0 items-center justify-start">
+  {/* 🌟 เติม whitespace-nowrap เข้าไปที่บรรทัดด้านล่างนี้ครับ */}
+  <div className={`hidden lg:flex items-center space-x-4 lg:space-x-5 xl:space-x-10 whitespace-nowrap text-[9.5px] xl:text-[11px] tracking-[0.15em] xl:tracking-[0.25em] uppercase font-normal h-full ${textColor}`}>
             <Link href="/about" onClick={(e) => handleNavClick(e, '/about')} className={`transition duration-300 ${isActive('/about') ? `${textColor} border-b ${borderColor} pb-1` : `${textMutedColor} ${textHoverColor}`}`}>
               About
             </Link>
